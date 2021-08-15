@@ -1,3 +1,12 @@
+#!python3
+# -*- coding: utf-8 -*-
+"""
+Author: tikic@qq.com
+Source: https://github.com/cluic/wxauto
+License: MIT License
+
+Developing Version
+"""
 import uiautomation as uia
 import win32gui, win32con
 import time
