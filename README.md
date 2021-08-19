@@ -7,20 +7,29 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 
 ## 示例
 ```python
+import wxauto
+
 # 获取当前微信客户端
 wx = Wechat()
 
 # 获取会话列表
 wx.GetSessionList()
 
-# 获取当前聊天窗口聊天消息
-wx.GetAllMessage()
+# 输出当前聊天窗口聊天消息
+msgs = wx.GetAllMessage()
+for msg in msgs:
+    print('%s : %s'%(msg[0], msg[1]))
+## 获取更多聊天记录
+wx.LoadMoreMessage()
+msgs = wx.GetAllMessage()
+for msg in msgs:
+    print('%s : %s'%(msg[0], msg[1]))
 
-# 向某人(王哥)发送消息
+# 向某人发送消息（以`文件传输助手`为例）
 msg = '你好~'
-who = '王哥'
-wx.ChatWith(who)  # 打开王哥聊天窗口
-wx.SendMsg(msg)  # 向王哥发送消息：你好~
+who = '文件传输助手'
+wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
+wx.SendMsg(msg)  # 向`文件传输助手`发送消息：你好~
 ```
 
 ## 注意事项
