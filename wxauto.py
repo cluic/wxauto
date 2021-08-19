@@ -106,10 +106,10 @@ class WxUtils:
         SaveButton.Click()
         Pic.SendKeys('{Esc}')
 
-        def ControlSize(control):
-            locate = control.BoundingRectangle
-            size = (locate.width(), locate.height())
-            return size
+    def ControlSize(control):
+        locate = control.BoundingRectangle
+        size = (locate.width(), locate.height())
+        return size
         
 class WeChat:
     def __init__(self):
