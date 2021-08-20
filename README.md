@@ -1,7 +1,10 @@
 # wxauto
+[![Wechat](https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1-3.3.5-brightgreen)](https://weixin.qq.com/cgi-bin/readtemplate?ang=zh_CN&t=page/faq/win/335/index&faq=win_335)
+[![Python](https://img.shields.io/badge/Python-3.6|3.7|3.8|3.9-blue)](https://www.python.org/)
+
 Windows版本微信客户端自动化，可实现简单的发送、接收微信消息，开发中
 
-开发过程使用的微信版本：3.3.5.34
+开发过程使用的微信版本：3.3.5
 
 部分版本的微信可能由于UI界面不同从而无法使用，截至2021-08-16最新版本可用
 
