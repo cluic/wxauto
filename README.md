@@ -10,7 +10,7 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 
 ## 示例
 ```python
-import wxauto
+from wxauto import WeChat
 
 # 获取当前微信客户端
 wx = WeChat()
