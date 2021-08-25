@@ -188,6 +188,7 @@ class WeChat:
         '''向当前聊天页面发送剪贴板复制的内容'''
         self.SendMsg('{Ctrl}v')
         
+    @property
     def GetAllMessage(self):
         '''获取当前窗口中加载的所有聊天记录'''
         MsgDocker = []
@@ -196,6 +197,7 @@ class WeChat:
             MsgDocker.append(WxUtils.SplitMessage(MsgItem))
         return MsgDocker
     
+    @property
     def GetLastMessage(self):
         '''获取当前窗口中最后一条聊天记录'''
         uia.SetGlobalSearchTimeout(1.0)
