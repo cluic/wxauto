@@ -19,12 +19,12 @@ wx = WeChat()
 wx.GetSessionList()
 
 # 输出当前聊天窗口聊天消息
-msgs = wx.GetAllMessage()
+msgs = wx.GetAllMessage
 for msg in msgs:
     print('%s : %s'%(msg[0], msg[1]))
 ## 获取更多聊天记录
 wx.LoadMoreMessage()
-msgs = wx.GetAllMessage()
+msgs = wx.GetAllMessage
 for msg in msgs:
     print('%s : %s'%(msg[0], msg[1]))
 
