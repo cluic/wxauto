@@ -9,6 +9,7 @@ Developing Version
 """
 import uiautomation as uia
 import win32gui, win32con
+import win32clipboard as wc
 import time
 import os
 
@@ -57,7 +58,6 @@ class WxUtils:
     def SetClipboard(data, dtype='text'):
         '''复制文本信息或图片到剪贴板
         data : 要复制的内容，str 或 Image 图像'''
-        import win32clipboard as wc
         if dtype.upper() == 'TEXT':
             type_data = win32con.CF_UNICODETEXT
         elif dtype.upper() == 'IMAGE':
@@ -184,6 +184,37 @@ class WeChat:
         self.EditMsg.SendKeys(msg, waitTime=0)
         self.EditMsg.SendKeys('{Enter}', waitTime=0)
     
+    def SendFiles(self, *filepath, not_exists='ignore'):
+        """向当前聊天窗口发送文件
+        not_exists: 如果未找到指定文件，继续或终止程序
+        *filepath: 要复制文件的绝对路径"""
+        key = ''
+        for file in filepath:
+            file = os.path.realpath(file)
+            if not os.path.exists(file):
+                if not_exists.upper() == 'IGNORE':
+                    print('File not exists:', file)
+                    continue
+                elif not_exists.upper() == 'RAISE':
+                    raise FileExistsError('File Not Exists: %s'%file)
+                else:
+                    raise ValueError('param not_exists only "ignore" or "raise" supported')
+            key += '<EditElement type="3" filepath="%s" shortcut="" />'%file
+        if not key:
+            return 0
+        wc.OpenClipboard()
+        wc.EmptyClipboard()
+        wc.SetClipboardData(13, '')
+        wc.SetClipboardData(16, b'\x04\x08\x00\x00')
+        wc.SetClipboardData(1, b'')
+        wc.SetClipboardData(7, b'')
+        wc.SetClipboardData(49328, b'<QQRichEditFormat>%s</QQRichEditFormat>\x00'%(key.encode()))
+        wc.SetClipboardData(49999, b'<RTXRichEditFormat>%s</RTXRichEditFormat>\x00'%(key.encode()))
+        wc.SetClipboardData(49696, b'<WeChatRichEditFormat>%s</WeChatRichEditFormat>\x00'%(key.encode()))
+        wc.CloseClipboard()
+        self.SendClipboard()
+        return 1
+
     def SendClipboard(self):
         '''向当前聊天页面发送剪贴板复制的内容'''
         self.SendMsg('{Ctrl}v')
@@ -210,5 +241,3 @@ class WeChat:
         '''定位到当前聊天页面，并往上滚动鼠标滚轮，加载更多聊天记录到内存'''
         n = 0.1 if n<0.1 else 1 if n>1 else n
         self.MsgList.WheelUp(wheelTimes=int(500*n), waitTime=0.1)
-    
-    
