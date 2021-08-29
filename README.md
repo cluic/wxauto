@@ -1,7 +1,7 @@
 # wxauto
 [![Wechat](https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1-3.3.5-07c160)](https://weixin.qq.com/cgi-bin/readtemplate?ang=zh_CN&t=page/faq/win/335/index&faq=win_335)
 [![Python](https://img.shields.io/badge/Python-3.6|3.7|3.8|3.9-blue)](https://www.python.org/)
-[![Python](https://img.shields.io/badge/bbs-FishC-007c7c)](https://fishc.com.cn/thread-200904-1-1.html)
+[![Python](https://img.shields.io/badge/BBS-FishC-007c7c)](https://fishc.com.cn/thread-200904-1-1.html)
 
 Windows版本微信客户端自动化，可实现简单的发送、接收微信消息，开发中
 
