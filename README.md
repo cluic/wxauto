@@ -34,6 +34,14 @@ msg = '你好~'
 who = '文件传输助手'
 wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
 wx.SendMsg(msg)  # 向`文件传输助手`发送消息：你好~
+
+# 向某人发送文件（以`文件传输助手`为例，发送三个不同类型文件）
+file1 = 'D:/test/wxauto.py'
+file2 = 'D:/test/pic.png'
+file3 = 'D:/test/files.rar'
+who = '文件传输助手'
+wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
+wx.SendFiles(file1, file2, file3)  # 向`文件传输助手`发送上述三个文件
 ```
 
 ## 注意事项
