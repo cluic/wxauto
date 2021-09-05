@@ -7,7 +7,7 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 
 开发过程使用的微信版本：3.3.5
 
-部分版本的微信可能由于UI界面不同从而无法使用，截至2021-08-16最新版本可用
+部分版本的微信可能由于UI界面不同从而无法使用，截至2021-09-05最新版本可用
 
 ## 示例
 ```python
@@ -42,6 +42,12 @@ file3 = 'D:/test/files.rar'
 who = '文件传输助手'
 wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
 wx.SendFiles(file1, file2, file3)  # 向`文件传输助手`发送上述三个文件
+
+# 向某人发送程序截图（以`文件传输助手`为例，发送微信截图）
+name = '微信'
+classname = 'WeChatMainWndForPC'
+wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
+wx.SendScreenshot(name, classname)  # 发送微信窗口的截图给文件传输助手
 ```
 
 ## 注意事项
