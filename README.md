@@ -13,11 +13,14 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 ```python
 from wxauto import WeChat
 
+
 # 获取当前微信客户端
 wx = WeChat()
 
+
 # 获取会话列表
 wx.GetSessionList()
+
 
 # 输出当前聊天窗口聊天消息
 msgs = wx.GetAllMessage
@@ -29,11 +32,13 @@ msgs = wx.GetAllMessage
 for msg in msgs:
     print('%s : %s'%(msg[0], msg[1]))
 
+
 # 向某人发送消息（以`文件传输助手`为例）
 msg = '你好~'
 who = '文件传输助手'
 wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
 wx.SendMsg(msg)  # 向`文件传输助手`发送消息：你好~
+
 
 # 向某人发送文件（以`文件传输助手`为例，发送三个不同类型文件）
 file1 = 'D:/test/wxauto.py'
@@ -42,6 +47,7 @@ file3 = 'D:/test/files.rar'
 who = '文件传输助手'
 wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
 wx.SendFiles(file1, file2, file3)  # 向`文件传输助手`发送上述三个文件
+
 
 # 向某人发送程序截图（以`文件传输助手`为例，发送微信截图）
 name = '微信'
