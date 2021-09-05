@@ -13,7 +13,7 @@ import time
 import os
 
 AUTHOR_EMAIL = 'tikic@qq.com'
-UPDATE = '2021-08-15'
+UPDATE = '2021-09-05'
 VERSION = 'Developing 0.0.1'
 
 class WxParam:
