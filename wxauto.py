@@ -4,7 +4,6 @@
 Author: tikic@qq.com
 Source: https://github.com/cluic/wxauto
 License: MIT License
-
 Developing Version
 """
 import uiautomation as uia
@@ -241,3 +240,18 @@ class WeChat:
         '''定位到当前聊天页面，并往上滚动鼠标滚轮，加载更多聊天记录到内存'''
         n = 0.1 if n<0.1 else 1 if n>1 else n
         self.MsgList.WheelUp(wheelTimes=int(500*n), waitTime=0.1)
+        
+    def SendScreenshot(self, name=None, classname=None):
+        '''发送某个桌面程序的截图，如：微信、记事本...
+        name : 要发送的桌面程序名字，如：微信
+        classname : 要发送的桌面程序类别名，一般配合 spy 小工具使用，以获取类名，如：微信的类名为 WeChatMainWndForPC'''
+        if name and classname:
+            return 0
+        else:
+            hwnd = win32gui.FindWindow(classname, name)
+        if hwnd:
+            WxUtils.Screenshot(hwnd)
+            self.SendClipboard()
+            return 1
+        else:
+            return 0
