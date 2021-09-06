@@ -13,8 +13,10 @@ import time
 import os
 
 AUTHOR_EMAIL = 'tikic@qq.com'
-UPDATE = '2021-09-05'
+UPDATE = '2021-09-06'
 VERSION = 'Developing 0.0.1'
+
+COPYDICT = {}
 
 class WxParam:
     SYS_TEXT_HEIGHT = 33
@@ -109,6 +111,32 @@ class WxUtils:
         locate = control.BoundingRectangle
         size = (locate.width(), locate.height())
         return size
+    
+    def ClipboardFormats(unit=0, *units):
+        units = list(units)
+        wc.OpenClipboard()
+        u = wc.EnumClipboardFormats(unit)
+        wc.CloseClipboard()
+        units.append(u)
+        if u:
+            units = WxUtils.ClipboardFormats(u, *units)
+        return units
+
+    def CopyDict():
+        Dict = {}
+        for i in WxUtils.ClipboardFormats():
+            if i == 0:
+                continue
+            wc.OpenClipboard()
+            try:
+                content = wc.GetClipboardData(i)
+                wc.CloseClipboard()
+            except:
+                wc.CloseClipboard()
+                raise ValueError
+            if len(str(i))>=4:
+                Dict[str(i)] = content
+        return Dict
         
 class WeChat:
     def __init__(self):
@@ -187,6 +215,7 @@ class WeChat:
         """向当前聊天窗口发送文件
         not_exists: 如果未找到指定文件，继续或终止程序
         *filepath: 要复制文件的绝对路径"""
+        global COPYDICT
         key = ''
         for file in filepath:
             file = os.path.realpath(file)
@@ -201,15 +230,21 @@ class WeChat:
             key += '<EditElement type="3" filepath="%s" shortcut="" />'%file
         if not key:
             return 0
+        if not COPYDICT:
+            wx.EditMsg.SendKeys(' ', waitTime=0)
+            wx.EditMsg.SendKeys('{Ctrl}a', waitTime=0)
+            wx.EditMsg.SendKeys('{Ctrl}c', waitTime=0)
+            wx.EditMsg.SendKeys('{Delete}', waitTime=0)
+            COPYDICT = WxUtils.CopyDict()
         wc.OpenClipboard()
         wc.EmptyClipboard()
         wc.SetClipboardData(13, '')
         wc.SetClipboardData(16, b'\x04\x08\x00\x00')
         wc.SetClipboardData(1, b'')
         wc.SetClipboardData(7, b'')
-        wc.SetClipboardData(49328, b'<QQRichEditFormat>%s</QQRichEditFormat>\x00'%(key.encode()))
-        wc.SetClipboardData(49999, b'<RTXRichEditFormat>%s</RTXRichEditFormat>\x00'%(key.encode()))
-        wc.SetClipboardData(49696, b'<WeChatRichEditFormat>%s</WeChatRichEditFormat>\x00'%(key.encode()))
+        for i in COPYDICT:
+            copydata = COPYDICT[i].replace(b'<EditElement type="0"><![CDATA[ ]]>', key.encode()).replace(b'type="0"', b'type="3"')
+            wc.SetClipboardData(int(i), copydata)
         wc.CloseClipboard()
         self.SendClipboard()
         return 1
