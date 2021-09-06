@@ -55,6 +55,7 @@ classname = 'WeChatMainWndForPC'
 wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
 wx.SendScreenshot(name, classname)  # 发送微信窗口的截图给文件传输助手
 ```
+> 注：为保证发送文件稳定性，首次发送文件可能花费时间较长，后续调用会缩短发送时间
 
 ## 注意事项
 目前还在开发中，测试案例较少，使用过程中可能遇到各种Bug
