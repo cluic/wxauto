@@ -231,10 +231,10 @@ class WeChat:
         if not key:
             return 0
         if not COPYDICT:
-            wx.EditMsg.SendKeys(' ', waitTime=0)
-            wx.EditMsg.SendKeys('{Ctrl}a', waitTime=0)
-            wx.EditMsg.SendKeys('{Ctrl}c', waitTime=0)
-            wx.EditMsg.SendKeys('{Delete}', waitTime=0)
+            self.EditMsg.SendKeys(' ', waitTime=0)
+            self.EditMsg.SendKeys('{Ctrl}a', waitTime=0)
+            self.EditMsg.SendKeys('{Ctrl}c', waitTime=0)
+            self.EditMsg.SendKeys('{Delete}', waitTime=0)
             COPYDICT = WxUtils.CopyDict()
         wc.OpenClipboard()
         wc.EmptyClipboard()
