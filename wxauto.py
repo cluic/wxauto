@@ -4,7 +4,7 @@
 Author: tikic@qq.com
 Source: https://github.com/cluic/wxauto
 License: MIT License
-Developing Version
+Version: 3.3.5.3
 """
 import uiautomation as uia
 import win32gui, win32con
@@ -14,7 +14,7 @@ import os
 
 AUTHOR_EMAIL = 'tikic@qq.com'
 UPDATE = '2021-09-06'
-VERSION = 'Developing 0.0.1'
+VERSION = '3.3.5.3'
 
 COPYDICT = {}
 
@@ -235,7 +235,12 @@ class WeChat:
             self.EditMsg.SendKeys('{Ctrl}a', waitTime=0)
             self.EditMsg.SendKeys('{Ctrl}c', waitTime=0)
             self.EditMsg.SendKeys('{Delete}', waitTime=0)
-            COPYDICT = WxUtils.CopyDict()
+            while True:
+                try:
+                    COPYDICT = WxUtils.CopyDict()
+                    break
+                except:
+                    pass
         wc.OpenClipboard()
         wc.EmptyClipboard()
         wc.SetClipboardData(13, '')
