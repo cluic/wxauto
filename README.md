@@ -67,7 +67,7 @@ wx.SendScreenshot(name, classname)  # 发送微信窗口的截图给文件传输
 目前还在开发中，测试案例较少，使用过程中可能遇到各种Bug
 
 如果遇到问题或者有新的想法，希望您可以通过以下两种方式联系我进行改进：
-- [点击前往此页面留下您的问题](https://github.com/cluic/wxauto/issues/new/choose)
+- [点击前往此页面留下您的问题](https://github.com/cluic/wxauto/issues/new/choose)（尽可能在 1 小时内回复，凌晨除外）
 - 邮箱：tikic@qq.com
 
 
