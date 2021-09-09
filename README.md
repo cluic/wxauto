@@ -1,6 +1,6 @@
 # wxauto
-[![Wechat](https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1-3.3.5-07c160)](https://weixin.qq.com/cgi-bin/readtemplate?ang=zh_CN&t=page/faq/win/335/index&faq=win_335)
-[![Python](https://img.shields.io/badge/Python-3.6|3.7|3.8|3.9-blue)](https://www.python.org/)
+[![Wechat](https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1-3.3.5-07c160?logo=wechat&logoColor=white)](https://weixin.qq.com/cgi-bin/readtemplate?ang=zh_CN&t=page/faq/win/335/index&faq=win_335)
+[![Python](https://img.shields.io/badge/Python-3.6|3.7|3.8|3.9-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Python](https://img.shields.io/badge/BBS-FishC-007c7c)](https://fishc.com.cn/thread-200904-1-1.html)
 
 Windows版本微信客户端自动化，可实现简单的发送、接收微信消息，开发中
@@ -66,7 +66,10 @@ wx.SendScreenshot(name, classname)  # 发送微信窗口的截图给文件传输
 ## 注意事项
 目前还在开发中，测试案例较少，使用过程中可能遇到各种Bug
 
-如果遇到问题或者有新的想法，希望您可以通过邮件联系我进行改进：tikic@qq.com
+如果遇到问题或者有新的想法，希望您可以通过以下两种方式联系我进行改进：
+- [点击前往此页面留下您的问题](https://github.com/cluic/wxauto/issues/new/choose)
+- 邮箱：tikic@qq.com
+
 
 ## 最后
 如果对您有帮助，希望可以帮忙点个Star，非常非常感谢！
