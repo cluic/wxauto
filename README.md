@@ -14,7 +14,7 @@ pip install wxauto
 ```
 
 ## 示例
-<font color='red'>**请先登录PC微信客户端**</font>
+<font color='#FF0000'>**请先登录PC微信客户端**</font>
 ```python
 from wxauto import *
 
