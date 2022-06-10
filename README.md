@@ -44,6 +44,16 @@ who = '文件传输助手'
 wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
 wx.SendMsg(msg)  # 向`文件传输助手`发送消息：你好~
 
+## 发送换行消息（最近很多人问换行消息如何发送，新增说明一下）
+msg = '''你好
+这是第二行
+这是第三行
+这是第四行'''
+who = '文件传输助手'
+WxUtils.SetClipboard(msg)    # 将内容复制到剪贴板，类似于Ctrl + C
+wx.ChatWith(who)  # 打开`文件传输助手`聊天窗口
+wx.SendClipboard()   # 发送剪贴板的内容，类似于Ctrl + V
+
 
 # 向某人发送文件（以`文件传输助手`为例，发送三个不同类型文件）
 file1 = 'D:/test/wxauto.py'
