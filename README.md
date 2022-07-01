@@ -83,6 +83,14 @@ wx.SendScreenshot(name, classname)  # 发送微信窗口的截图给文件传输
 ## 后台调用
 **另提供后台调用版本，无需操控鼠标，完全后台接收、发送消息，如有需要可加 QQ271374208**
 
+██████╗&nbsp;███████╗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██╗&nbsp;██████╗&nbsp;███████╗&nbsp;&nbsp;&nbsp;██╗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██╗&nbsp;&nbsp;██████╗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██████╗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;█████╗&nbsp;
+╚════██╗╚════██║&nbsp;&nbsp;███║&nbsp;╚════██╗╚════██║&nbsp;██║&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██║&nbsp;&nbsp;╚════██╗&nbsp;&nbsp;██╔═████╗&nbsp;██╔══██╗
+&nbsp;&nbsp;&nbsp;█████╔╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██╔╝&nbsp;╚██║&nbsp;&nbsp;&nbsp;&nbsp;█████╔╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██╔╝&nbsp;███████║&nbsp;&nbsp;&nbsp;&nbsp;█████╔╝&nbsp;&nbsp;&nbsp;██║██╔██║&nbsp;╚█████╔╝
+██╔═══╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██╔╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██║&nbsp;&nbsp;&nbsp;&nbsp;╚═══██╗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██╔╝&nbsp;&nbsp;&nbsp;&nbsp;╚════██║&nbsp;██╔═══╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;████╔╝██║&nbsp;██╔══██╗
+███████╗&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██║&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██║&nbsp;██████╔╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██║&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██║&nbsp;███████╗&nbsp;&nbsp;&nbsp;╚██████╔╝&nbsp;╚█████╔╝
+╚══════╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╚═╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╚═╝&nbsp;╚═════╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╚═╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╚═╝&nbsp;╚══════╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╚═════╝&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╚════╝&nbsp;
+
+
 ## 最后
 如果对您有帮助，希望可以帮忙点个Star，如果您正在使用这个项目，可以将右上角的 Unwatch 点为 Watching，以便在我更新或修复某些 Bug 后即使收到反馈，感谢您的支持，非常感谢！
 
