@@ -3,7 +3,7 @@
 """
 Author: tikic@qq.com
 Source: https://github.com/cluic/wxauto
-License: MIT License
+License: MIT License 
 Version: 3.7.6.29
 """
 import uiautomation as uia
