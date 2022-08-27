@@ -2,7 +2,7 @@
 
 Windows版本微信客户端自动化，可实现简单的发送、接收微信消息，开发中
 
-后台调用版本：https://github.com/cluic/wxautoapi
+[点此获取后台调用版本](https://github.com/cluic/wxautoapi)
 
 |  环境  | 版本 |
 | :----: | :--: |
