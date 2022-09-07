@@ -326,3 +326,39 @@ class WeChat:
 
         # 返回去重过后的联系人列表
         return list(set(contacts))
+    
+    def BatchSendMsg(self, names: list, msg: str = '', file: str = '', msgs: list = None, files=None) -> None:
+        """群发消息，传入列表
+        :param names:   （必选参数）用户列表
+        :param msg:     （可选参数）发送的文本
+        :param file:    （可选参数）发送的文件路径
+        :param msgs:    （可选参数）可迭代对象，包含多个发送文本
+        :param files:   （可选参数）可迭代对象，包含多个发送的文件路径
+        :return:
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好')
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', file='file_path')
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', msgs=['你好', '你好'])
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', files=['file_path', 'file_path'])
+        """
+        if files is None:
+            files = []
+        assert names, "用户名列表为空"  # 名字为空则抛出异常
+        assert any([True if _ else False for _ in [msg, file, msgs, files]]), "发内容为空"
+
+        for name in names:
+            print(name)
+            try:
+                self.ChatWith(name)  # 跳转到这个人
+                self.GetAllMessage  # 获取聊天框的信息（还有一层目的是，如果用户不存在，捕获异常并跳过
+            except LookupError:
+                continue
+            if msg:
+                WxUtils.SetClipboard(msg)  # 发送文本
+                self.SendClipboard()  # 发送剪贴板的内容，类似于Ctrl + V
+            if file:
+                time.sleep(0.5)
+                self.SendFiles(file)  # 发送文件
+            if msgs:
+                self.SendFiles(*msgs)
+            if files:
+                self.SendFiles(*files)
