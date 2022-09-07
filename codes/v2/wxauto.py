@@ -172,8 +172,10 @@ class WeChat:
         '''
         self.UiaAPI.SetFocus()
         time.sleep(0.2)
-        self.UiaAPI.SendKeys('{Ctrl}f', waitTime=1)
-        self.SearchBox.SendKeys(keyword, waitTime=1.5)
+        self.UiaAPI.SendKeys('{Ctrl}f', waitTime=0.5)
+        self.UiaAPI.SendKeys('{Ctrl}a', waitTime=0.2)
+        self.UiaAPI.SendKeys('{Delete}', waitTime=0.2)
+        self.SearchBox.SendKeys(keyword, waitTime=1.0)
         self.SearchBox.SendKeys('{Enter}')
     
     def ChatWith(self, who, RollTimes=None):
@@ -295,3 +297,68 @@ class WeChat:
             return 1
         else:
             return 0
+        
+    def GetAllContacts(self, num: int = 50):
+        """获取微信所有好友的名称，返回一个列表
+        :param num: 用户数量 / 10
+        :return: 用户列表
+        """
+        # 点击 通讯录管理
+        self.UiaAPI.ButtonControl(Name="通讯录").Click()
+        contact_ctrl = self.UiaAPI.ListControl(Name="联系人")
+        contact_ctrl.ButtonControl(Name="通讯录管理").Click()
+
+        # 切换到通讯录管理
+        contacts_window = uia.GetForegroundControl()
+        scroll_pattern = contacts_window.ListControl().GetScrollPattern()
+        # scroll_pattern = list_ctrl.GetScrollPattern()
+
+        # 读取用户
+        contacts = list()
+        rate = round(float(1.05 / num), 2)
+        for percent in np.arange(0, 1.05, rate):
+            # 每次滑动一点点
+            scroll_pattern.SetScrollPercent(uia.ScrollPattern.NoScrollValue, percent)
+            for contact in contacts_window.ListControl().GetChildren():
+                # 获取用户的昵称以及备注
+                name = contact.TextControl().Name
+                contacts.append(name)
+
+        # 返回去重过后的联系人列表
+        return list(set(contacts))
+    
+    def BatchSendMsg(self, names: list, msg: str = '', file: str = '', msgs: list = None, files=None) -> None:
+        """群发消息，传入列表
+        :param names:   （必选参数）用户列表
+        :param msg:     （可选参数）发送的文本
+        :param file:    （可选参数）发送的文件路径
+        :param msgs:    （可选参数）可迭代对象，包含多个发送文本
+        :param files:   （可选参数）可迭代对象，包含多个发送的文件路径
+        :return:
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好')
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', file='file_path')
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', msgs=['你好', '你好'])
+        >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', files=['file_path', 'file_path'])
+        """
+        if files is None:
+            files = []
+        assert names, "用户名列表为空"
+        assert any([msg, file, msgs, files]), "发内容为空"
+
+        for name in names:
+            print(name)
+            try:
+                self.ChatWith(name)  # 跳转到这个人
+                self.GetAllMessage  # 获取聊天框的信息（还有一层目的是，如果用户不存在，捕获异常并跳过
+            except LookupError:
+                continue
+            if msg:
+                WxUtils.SetClipboard(msg)  # 发送文本
+                self.SendClipboard()  # 发送剪贴板的内容，类似于Ctrl + V
+            if file:
+                time.sleep(0.5)
+                self.SendFiles(file)  # 发送文件
+            if msgs:
+                self.SendFiles(*msgs)
+            if files:
+                self.SendFiles(*files)
