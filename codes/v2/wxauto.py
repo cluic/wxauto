@@ -342,8 +342,8 @@ class WeChat:
         """
         if files is None:
             files = []
-        assert names, "用户名列表为空"  # 名字为空则抛出异常
-        assert any([True if _ else False for _ in [msg, file, msgs, files]]), "发内容为空"
+        assert names, "用户名列表为空"
+        assert any([msg, file, msgs, files]), "发内容为空"
 
         for name in names:
             print(name)
