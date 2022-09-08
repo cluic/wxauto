@@ -174,9 +174,9 @@ class WeChat:
         time.sleep(0.2)
         self.UiaAPI.SendKeys('{Ctrl}f', waitTime=0.5)
         self.UiaAPI.SendKeys('{Ctrl}a', waitTime=0.2)
-        self.UiaAPI.SendKeys('{Delete}', waitTime=0.2)
+        self.UiaAPI.SendKey(uia.SpecialKeyNames['DELETE'])
         self.SearchBox.SendKeys(keyword, waitTime=1.0)
-        self.SearchBox.SendKeys('{Enter}')
+        self.UiaAPI.SendKey(uia.SpecialKeyNames['ENTER'])
     
     def ChatWith(self, who, RollTimes=None):
         '''
@@ -236,7 +236,7 @@ class WeChat:
             self.EditMsg.SendKeys(' ', waitTime=0)
             self.EditMsg.SendKeys('{Ctrl}a', waitTime=0)
             self.EditMsg.SendKeys('{Ctrl}c', waitTime=0)
-            self.EditMsg.SendKeys('{Delete}', waitTime=0)
+            self.UiaAPI.SendKey(uia.SpecialKeyNames['DELETE'])
             while True:
                 try:
                     COPYDICT = WxUtils.CopyDict()
@@ -297,11 +297,63 @@ class WeChat:
             return 1
         else:
             return 0
-        
-    def GetAllContacts(self, num: int = 50):
+
+    def GetSpecifyLabelContact(self, label: str, num: int = 10) -> list:
+        """获取微信所有好友的名称，返回一个列表
+        :param label: 指定标签
+        :param num: 用户数量 / 10
+        :return: 用户列表
+        >>> self.GetSpecifyLabelContact(label="你需要采集的标签")
+        >>> self.GetSpecifyLabelContact(label="你需要采集的标签", num=12)
+        """
+
+        def click_label():
+            """点击标签"""
+            contacts_window.ButtonControl(Name="标签").Click()
+
+        # 点击 通讯录管理
+        self.UiaAPI.ButtonControl(Name="通讯录").Click()
+        contact_ctrl = self.UiaAPI.ListControl(Name="联系人")
+        contact_ctrl.ButtonControl(Name="通讯录管理").Click()
+
+        # 切换到通讯录管理，相当于切换到弹出来的页面
+        contacts_window = uia.GetForegroundControl()
+
+        # 点击标签
+        click_label()
+        # 点击高中同学标签
+        contacts_window.PaneControl(Name=label).Click()
+        time.sleep(0.3)
+        # 关闭标签
+        click_label()
+
+        # 获取滑动模式
+        scroll_pattern = contacts_window.ListControl().GetScrollPattern()
+        assert scroll_pattern, "没有可滑动对象"
+
+        contacts = list()  # # 存储用户的列表
+        # 因为range 不支持浮点类型，也不想导入numpy库，所以迂回点，采取这种方式
+        rate: int = int(float(102000 / num))  # 滑动的进度
+        for percent in range(0, 102000, rate):
+            # 每次滑动一点点，-1代表不用滑动
+            scroll_pattern.SetScrollPercent(horizontalPercent=-1, verticalPercent=percent / 100000)
+            # 获取当前页面的 列表 -> 子节点
+            for contact in contacts_window.ListControl().GetChildren():
+                # 获取用户的昵称以及备注
+                nick_name = contact.TextControl().Name  # 用户名
+                remark_name = contact.ButtonControl(foundIndex=2).Name  # 用户备注名，第一层会错位，真正的是第二层，第三层是标签名
+                name: str = remark_name if remark_name else nick_name
+                contacts.append(name)
+        # 结束时候关闭 "通讯录管理" 窗口
+        contacts_window.SendKey(uia.SpecialKeyNames['ESC'])
+        return list(set(contacts))
+
+    def GetAllContact(self, num: int = 10) -> list:
         """获取微信所有好友的名称，返回一个列表
         :param num: 用户数量 / 10
         :return: 用户列表
+        >>> self.GetAllContact()
+        >>> self.GetAllContact(num=20)
         """
         # 点击 通讯录管理
         self.UiaAPI.ButtonControl(Name="通讯录").Click()
@@ -310,23 +362,28 @@ class WeChat:
 
         # 切换到通讯录管理
         contacts_window = uia.GetForegroundControl()
+        # 获取滑动模式
         scroll_pattern = contacts_window.ListControl().GetScrollPattern()
-        # scroll_pattern = list_ctrl.GetScrollPattern()
+        assert scroll_pattern, "没有可滑动对象"
 
-        # 读取用户
-        contacts = list()
-        rate = round(float(1.05 / num), 2)
-        for percent in np.arange(0, 1.05, rate):
-            # 每次滑动一点点
-            scroll_pattern.SetScrollPercent(uia.ScrollPattern.NoScrollValue, percent)
+        contacts = list()  # 存储用户的列表
+        # 因为range 不支持浮点类型，也不想导入numpy库，所以迂回点，采取这种方式，
+        # 等同于 np.arange(0, 1.02, rate)
+        rate: int = int(float(102000 / num))  # 滑动的进度
+        for percent in range(0, 102000, rate):
+            # 每次滑动一点点，-1代表不用滑动
+            scroll_pattern.SetScrollPercent(horizontalPercent=-1, verticalPercent=percent / 100000)
+            # 获取当前页面的 列表 -> 子节点
             for contact in contacts_window.ListControl().GetChildren():
                 # 获取用户的昵称以及备注
-                name = contact.TextControl().Name
+                nick_name = contact.TextControl().Name  # 用户名
+                remark_name = contact.ButtonControl(foundIndex=2).Name  # 用户备注名，第一层会错位，真正的是第二层，第三层是标签名
+                name: str = remark_name if remark_name else nick_name
                 contacts.append(name)
-
-        # 返回去重过后的联系人列表
+        # 结束时候关闭 "通讯录管理" 窗口
+        contacts_window.SendKey(uia.SpecialKeyNames['ESC'])
         return list(set(contacts))
-    
+
     def BatchSendMsg(self, names: list, msg: str = '', file: str = '', msgs: list = None, files=None) -> None:
         """群发消息，传入列表
         :param names:   （必选参数）用户列表
@@ -340,13 +397,10 @@ class WeChat:
         >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', msgs=['你好', '你好'])
         >>> self.BatchSendMsg(names=['文件传输助手', 'other'], msg='你好', files=['file_path', 'file_path'])
         """
-        if files is None:
-            files = []
-        assert names, "用户名列表为空"
-        assert any([msg, file, msgs, files]), "发内容为空"
+        assert names, "用户名列表为空"  # 名字为空则抛出异常
+        assert any([True if _ else False for _ in [msg, file, msgs, files]]), "发内容为空"
 
         for name in names:
-            print(name)
             try:
                 self.ChatWith(name)  # 跳转到这个人
                 self.GetAllMessage  # 获取聊天框的信息（还有一层目的是，如果用户不存在，捕获异常并跳过
