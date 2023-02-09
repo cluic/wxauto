@@ -86,3 +86,10 @@ wx.SendScreenshot(name, classname)  # 发送微信窗口的截图给文件传输
 
 ## 免责声明
 代码仅供交流学习使用，请勿用于非法用途和商业用途！如因此产生任何法律纠纷，均与作者无关！
+
+## 支持
+非常感谢您对该项目的支持
+
+![支付宝](https://i.328888.xyz/2023/02/09/3QaBP.png)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
+![微信](https://i.328888.xyz/2023/02/09/3Q1JX.png)
+
