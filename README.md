@@ -13,6 +13,8 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 
 部分版本的微信可能由于UI界面不同从而无法使用，截至2022-06-10最新版本可用
 
+[![Star History Chart](https://api.star-history.com/svg?repos=cluic/wxauto&type=Date)](https://star-history.com/#cluic/wxauto)
+
 ## 示例
 <font color=red>**请先登录PC微信客户端**</font>
 ```python
