@@ -236,15 +236,28 @@ class WeChat:
                     raise ValueError('param not_exists only "ignore" or "raise" supported')
             key += '<EditElement type="3" filepath="%s" shortcut="" />'%file
 
-        data = {
-            '49976': b'<WeChatRichEditFormat>%s</WeChatRichEditFormat>\x00'%key.encode(),
-            '50335': b'<RTXRichEditFormat>%s</RTXRichEditFormat>\x00'%key.encode(),
-            '50115': b'<QQRichEditFormat>%s</QQRichEditFormat>\x00'%key.encode(),
+        self.EditMsg.SendKeys(' ', waitTime=0)
+        self.EditMsg.SendKeys('{Ctrl}a', waitTime=0)
+        self.EditMsg.SendKeys('{Ctrl}c', waitTime=0)
+        self.EditMsg.SendKeys('{Delete}', waitTime=0)
+        while True:
+            try:
+                data = WxUtils.CopyDict()
+                break
+            except:
+                pass
+
+        for i in data:
+            data[i] = data[i].replace(b'<EditElement type="0"><![CDATA[ ]]></EditElement>', key.encode())
+
+        data1 = {
             '13': '',
             '16': b'\x04\x08\x00\x00',
             '1': b'',
             '7': b''
         }
+        data.update(data1)
+
         wc.OpenClipboard()
         wc.EmptyClipboard()
         for k, v in data.items():
