@@ -18,6 +18,7 @@ VERSION = '3.3.5.3'
 
 COPYDICT = {}
 
+
 class WxParam:
     SYS_TEXT_HEIGHT = 33
     TIME_TEXT_HEIGHT = 34
@@ -25,7 +26,7 @@ class WxParam:
     CHAT_TEXT_HEIGHT = 52
     CHAT_IMG_HEIGHT = 117
     SpecialTypes = ['[文件]', '[图片]', '[视频]', '[音乐]', '[链接]']
-    
+
 
 class WxUtils:
     def SplitMessage(MsgItem):
@@ -55,7 +56,7 @@ class WxUtils:
                 Msg = ('SYS', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()]))
         uia.SetGlobalSearchTimeout(10.0)
         return Msg
-    
+
     def SetClipboard(data, dtype='text'):
         '''复制文本信息或图片到剪贴板
         data : 要复制的内容，str 或 Image 图像'''
@@ -81,16 +82,16 @@ class WxUtils:
         '''
         import pyscreenshot as shot
         bbox = win32gui.GetWindowRect(hwnd)
-        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,\
-                              win32con.SWP_SHOWWINDOW|win32con.SWP_NOMOVE|win32con.SWP_NOSIZE)
-        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,\
-                              win32con.SWP_SHOWWINDOW|win32con.SWP_NOMOVE|win32con.SWP_NOSIZE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, \
+                              win32con.SWP_SHOWWINDOW | win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, \
+                              win32con.SWP_SHOWWINDOW | win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
         win32gui.BringWindowToTop(hwnd)
         im = shot.grab(bbox)
         if to_clipboard:
             WxUtils.SetClipboard(im, 'image')
         return im
-    
+
     def SavePic(savepath=None, filename=None):
         Pic = uia.WindowControl(ClassName='ImagePreviewWnd', Name='图片查看')
         Pic.SendKeys('{Ctrl}s')
@@ -111,7 +112,7 @@ class WxUtils:
         locate = control.BoundingRectangle
         size = (locate.width(), locate.height())
         return size
-    
+
     def ClipboardFormats(unit=0, *units):
         units = list(units)
         wc.OpenClipboard()
@@ -134,19 +135,21 @@ class WxUtils:
             except:
                 wc.CloseClipboard()
                 raise ValueError
-            if len(str(i))>=4:
+            if len(str(i)) >= 4:
                 Dict[str(i)] = content
         return Dict
-        
+
+
 class WeChat:
     def __init__(self):
         self.UiaAPI = uia.WindowControl(ClassName='WeChatMainWndForPC')
         self.SessionList = self.UiaAPI.ListControl(Name='会话')
-        self.EditMsg = self.UiaAPI.EditControl(Name='输入')
+        self.EditMsg = self.UiaAPI.EditControl(LocalizedControlType='编辑')
         self.SearchBox = self.UiaAPI.EditControl(Name='搜索')
         self.MsgList = self.UiaAPI.ListControl(Name='消息')
+        self.ClearButton = self.UiaAPI.ButtonControl(Name='清空')
         self.SessionItemList = []
-    
+
     def GetSessionList(self, reset=False):
         '''获取当前会话列表，更新会话列表'''
         self.SessionItem = self.SessionList.ListItemControl()
@@ -164,7 +167,7 @@ class WeChat:
                 SessionList.append(name)
             self.SessionItem = self.SessionItem.GetNextSiblingControl()
         return SessionList
-        
+
     def Search(self, keyword):
         '''
         查找微信好友或关键词
@@ -173,9 +176,10 @@ class WeChat:
         self.UiaAPI.SetFocus()
         time.sleep(0.2)
         self.UiaAPI.SendKeys('{Ctrl}f', waitTime=1)
-        self.SearchBox.SendKeys(keyword, waitTime=1.5)
+        self.SearchBox.SendKeys(keyword, waitTime=2)
         self.SearchBox.SendKeys('{Enter}')
-    
+        self.ClearButton.Click() if self.ClearButton.Exists() else None
+
     def ChatWith(self, who, RollTimes=None):
         '''
         打开某个聊天框
@@ -184,22 +188,24 @@ class WeChat:
         '''
         self.UiaAPI.SwitchToThisWindow()
         RollTimes = 10 if not RollTimes else RollTimes
+
         def roll_to(who=who, RollTimes=RollTimes):
             for i in range(RollTimes):
                 if who not in self.GetSessionList()[:-1]:
-                    self.SessionList.WheelDown(wheelTimes=3, waitTime=0.1*i)
+                    self.SessionList.WheelDown(wheelTimes=3, waitTime=0.1 * i)
                 else:
                     time.sleep(0.5)
                     self.SessionList.ListItemControl(Name=who).Click(simulateMove=False)
                     return 1
             return 0
+
         rollresult = roll_to()
         if rollresult:
             return 1
         else:
             self.Search(who)
             return roll_to(RollTimes=1)
-    
+
     def SendMsg(self, msg, clear=True):
         '''向当前窗口发送消息
         msg : 要发送的消息
@@ -210,7 +216,7 @@ class WeChat:
             self.EditMsg.SendKeys('{Ctrl}a', waitTime=0)
         self.EditMsg.SendKeys(msg, waitTime=0)
         self.EditMsg.SendKeys('{Enter}', waitTime=0)
-    
+
     def SendFiles(self, *filepath, not_exists='ignore'):
         """向当前聊天窗口发送文件
         not_exists: 如果未找到指定文件，继续或终止程序
@@ -224,10 +230,10 @@ class WeChat:
                     print('File not exists:', file)
                     continue
                 elif not_exists.upper() == 'RAISE':
-                    raise FileExistsError('File Not Exists: %s'%file)
+                    raise FileExistsError('File Not Exists: %s' % file)
                 else:
                     raise ValueError('param not_exists only "ignore" or "raise" supported')
-            key += '<EditElement type="3" filepath="%s" shortcut="" />'%file
+            key += '<EditElement type="3" filepath="%s" shortcut="" />' % file
         if not key:
             return 0
         if not COPYDICT:
@@ -248,7 +254,8 @@ class WeChat:
         wc.SetClipboardData(1, b'')
         wc.SetClipboardData(7, b'')
         for i in COPYDICT:
-            copydata = COPYDICT[i].replace(b'<EditElement type="0"><![CDATA[ ]]>', key.encode()).replace(b'type="0"', b'type="3"')
+            copydata = COPYDICT[i].replace(b'<EditElement type="0"><![CDATA[ ]]>', key.encode()).replace(b'type="0"',
+                                                                                                         b'type="3"')
             wc.SetClipboardData(int(i), copydata)
         wc.CloseClipboard()
         self.SendClipboard()
@@ -257,7 +264,7 @@ class WeChat:
     def SendClipboard(self):
         '''向当前聊天页面发送剪贴板复制的内容'''
         self.SendMsg('{Ctrl}v')
-        
+
     @property
     def GetAllMessage(self):
         '''获取当前窗口中加载的所有聊天记录'''
@@ -266,7 +273,7 @@ class WeChat:
         for MsgItem in MsgItems:
             MsgDocker.append(WxUtils.SplitMessage(MsgItem))
         return MsgDocker
-    
+
     @property
     def GetLastMessage(self):
         '''获取当前窗口中最后一条聊天记录'''
@@ -275,12 +282,12 @@ class WeChat:
         Msg = WxUtils.SplitMessage(MsgItem)
         uia.SetGlobalSearchTimeout(10.0)
         return Msg
-    
+
     def LoadMoreMessage(self, n=0.1):
         '''定位到当前聊天页面，并往上滚动鼠标滚轮，加载更多聊天记录到内存'''
-        n = 0.1 if n<0.1 else 1 if n>1 else n
-        self.MsgList.WheelUp(wheelTimes=int(500*n), waitTime=0.1)
-        
+        n = 0.1 if n < 0.1 else 1 if n > 1 else n
+        self.MsgList.WheelUp(wheelTimes=int(500 * n), waitTime=0.1)
+
     def SendScreenshot(self, name=None, classname=None):
         '''发送某个桌面程序的截图，如：微信、记事本...
         name : 要发送的桌面程序名字，如：微信
