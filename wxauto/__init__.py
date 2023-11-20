@@ -1,0 +1,1 @@
+from .wxauto import WeChat
