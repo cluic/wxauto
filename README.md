@@ -1,5 +1,7 @@
 # wxauto  (适用PC微信3.9.8.15版本）
 
+## 2023-11-20重写wxauto，欢迎指出bug
+
 Windows版本微信客户端自动化，可实现简单的发送、接收微信消息、保存聊天图片
 
 [点此获取后台调用版本](https://github.com/cluic/wxautoapi)
@@ -46,7 +48,7 @@ wx.SendFiles(filepath=files, who=who)  # 向`文件传输助手`发送上述三�
 
 # 下载当前聊天窗口的聊天记录及图片
 msgs = wx.GetAllMessage(savepic=True)   # 获取聊天记录，及自动下载图片
-
+```
 ## 注意事项
 目前还在开发中，测试案例较少，使用过程中可能遇到各种Bug
 
@@ -63,7 +65,6 @@ msgs = wx.GetAllMessage(savepic=True)   # 获取聊天记录，及自动下载�
 
 ## 支持
 非常感谢您对该项目的支持
-
-![支付宝](https://i.328888.xyz/2023/02/09/3QaBP.png)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-![微信](https://i.328888.xyz/2023/02/09/3Q1JX.png)
+![支付宝](https://github.com/cluic/wxauto/blob/WeChat3.9.8/utils/alpay.jpg)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
+![微信](https://github.com/cluic/wxauto/blob/WeChat3.9.8/utils/wxpay.jpg)
 
