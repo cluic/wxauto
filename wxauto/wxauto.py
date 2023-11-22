@@ -185,6 +185,8 @@ class WeChat:
         if who in list(sessiondict.keys())[:-1]:
             if sessiondict[who] > 0:
                 who1 = f"{who}{sessiondict[who]}条新消息"
+            eles:
+                who1 = who
             self.SessionBox.ListItemControl(Name=who1).Click(simulateMove=False)
             return who
         self.UiaAPI.SendKeys('{Ctrl}f', waitTime=1)
