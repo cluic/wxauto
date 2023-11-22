@@ -1,4 +1,5 @@
 import win32clipboard
+import pyscreenshot
 import win32gui
 import win32api
 import win32con
@@ -11,6 +12,13 @@ from ctypes import (
     sizeof
 )
 import os
+
+
+def IsRedPixel(uicontrol):
+    rect = uicontrol.BoundingRectangle
+    bbox = (rect.left, rect.top, rect.right, rect.bottom)
+    img = pyscreenshot.grab(bbox)
+    return any(p[0] > p[1] and p[0] > p[2] for p in img.getdata())
 
 class DROPFILES(Structure):
     _fields_ = [
