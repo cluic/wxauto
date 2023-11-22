@@ -1,3 +1,7 @@
+"""
+多语言关键字尚未收集完整，欢迎多多pull requests帮忙补充，感谢
+"""
+
 MAIN_LANGUAGE = {
     # 导航栏
     '导航': {'cn': '导航', 'cn_t': '', 'en': 'Navigation'},
