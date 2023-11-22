@@ -1,17 +1,17 @@
 """
-Author: louxinghao
+Author: cluic
 Version: 3.9.8.15
-Update: 2023-11-20
+Update: 2023-11-22
 """
-
 import uiautomation as uia
-from .languages import *
-from .utils import *
-from .errors import *
+from languages import *
+from utils import *
+from errors import *
 import warnings
 import datetime
 import time
 import os
+import re
 
 class WxParam:
     SYS_TEXT_HEIGHT = 33
@@ -101,21 +101,74 @@ class WeChat:
         uia.SetGlobalSearchTimeout(10.0)
         return Msg
     
-    def GetSessionList(self, reset=False):
+    def GetSessionAmont(self, SessionItem):
+        """获取聊天对象名和新消息条数
+        
+        Args:
+            SessionItem (uiautomation.ListItemControl): 聊天对象控件
+            
+        Returns:
+            sessionname (str): 聊天对象名
+            amount (int): 新消息条数
+        """
+        matchobj = re.search('\d+条新消息', SessionItem.Name)
+        amount = 0
+        if matchobj:
+            try:
+                amount = int([i for i in SessionItem.GetChildren()[0].GetChildren() if type(i) == uia.uiautomation.TextControl][0].Name)
+            except:
+                pass
+        if amount:
+            sessionname = SessionItem.Name.replace(matchobj.group(),'')
+        else:
+            sessionname = SessionItem.Name
+        return sessionname, amount
+    
+    def CheckNewMessage(self):
+        """是否有新消息"""
+        return IsRedPixel(self.A_ChatIcon)
+    
+    def GetAllNewMessage(self):
+        """获取所有新消息"""
+        newmessages = {}
+        while True:
+            if self.CheckNewMessage():
+                self.A_ChatIcon.DoubleClick(simulateMove=False)
+                sessiondict = self.GetSessionList(newmessage=True)
+                for session in sessiondict:
+                    self.ChatWith(session)
+                    newmessages[session] = self.GetAllMessage()[-sessiondict[session]:]
+            else:
+                break
+        return newmessages
+    
+    def GetSessionList(self, reset=False, newmessage=False):
+        """获取当前聊天列表中的所有聊天对象
+        
+        Args:
+            reset (bool): 是否重置SessionItemList
+            newmessage (bool): 是否只获取有新消息的聊天对象
+            
+        Returns:
+            SessionList (dict): 聊天对象列表，键为聊天对象名，值为新消息条数
+        """
         self.SessionItem = self.SessionBox.ListItemControl()
         if reset:
             self.SessionItemList = []
-        SessionList = []
+        SessionList = {}
         for i in range(100):
             try:
-                name = self.SessionItem.Name
+                name, amount = self.GetSessionAmont(self.SessionItem)
             except:
                 break
             if name not in self.SessionItemList:
                 self.SessionItemList.append(name)
             if name not in SessionList:
-                SessionList.append(name)
+                SessionList[name] = amount
             self.SessionItem = self.SessionItem.GetNextSiblingControl()
+            
+        if newmessage:
+            return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
         return SessionList
     
     def ChatWith(self, who):
@@ -128,8 +181,11 @@ class WeChat:
             chatname ( str ): 匹配值第一个的完整名字
         '''
         self._show()
-        if who in self.GetSessionList(True)[:-1]:
-            self.SessionBox.ListItemControl(Name=who).Click(simulateMove=False)
+        sessiondict = self.GetSessionList(True)
+        if who in list(sessiondict.keys())[:-1]:
+            if sessiondict[who] > 0:
+                who1 = f"{who}{sessiondict[who]}条新消息"
+            self.SessionBox.ListItemControl(Name=who1).Click(simulateMove=False)
             return who
         self.UiaAPI.SendKeys('{Ctrl}f', waitTime=1)
         self.B_Search.SendKeys(who, waitTime=1.5)
@@ -162,6 +218,8 @@ class WeChat:
             except:
                 self.ChatWith(who)
                 editbox = self.ChatBox.EditControl(Name=who, searchDepth=10)
+        else:
+            editbox = self.ChatBox.EditControl(searchDepth=10)
         if clear:
             editbox.SendKeys('{Ctrl}a', waitTime=0)
         self._show()
