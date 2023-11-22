@@ -4,9 +4,9 @@ Version: 3.9.8.15
 Update: 2023-11-22
 """
 import uiautomation as uia
-from languages import *
-from utils import *
-from errors import *
+from .languages import *
+from .utils import *
+from .errors import *
 import warnings
 import datetime
 import time
