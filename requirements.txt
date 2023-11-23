@@ -1,0 +1,3 @@
+uiautomation
+pyscreenshot
+pywin32
