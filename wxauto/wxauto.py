@@ -34,7 +34,7 @@ class WeChat:
         MainControl1 = [i for i in self.UiaAPI.GetChildren() if not i.ClassName][0]
         MainControl2 = MainControl1.GetChildren()[0]
         # 三个布局，导航栏(A)、聊天列表(B)、聊天框(C)
-        # ———————————————
+        # _______________
         # |■|———|    -□×|
         # | |———|       |
         # |A| B |   C   |   <--- 微信窗口布局简图示意
