@@ -17,6 +17,22 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 
 [![Star History Chart](https://api.star-history.com/svg?repos=cluic/wxauto&type=Date)](https://star-history.com/#cluic/wxauto)
 
+## 获取wxauto（请勿直接pip install）
+cmd窗口：
+```shell
+git clone https://github.com/cluic/wxauto.git
+cd wxauto
+```
+python窗口：
+```python
+>>> import wxauto
+>>> wxauto.VERSION
+'3.9.8.15'
+>>> wx = wxauto.WeChat()
+初始化成功，获取到已登录窗口：xxx
+```
+
+
 ## 示例
 <font color=red>**请先登录PC微信客户端**</font>
 ```python
