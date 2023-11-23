@@ -119,7 +119,7 @@ class WeChat:
             except:
                 pass
         if amount:
-            sessionname = SessionItem.Name.replace(matchobj.group(),'')
+            sessionname = SessionItem.Name.replace(f'{amount}条新消息','')
         else:
             sessionname = SessionItem.Name
         return sessionname, amount
