@@ -326,8 +326,27 @@ class WeChat:
                     idx += 1
         return msgs
     
+    def LoadMoreMessage(self):
+        """加载当前聊天页面更多聊天信息"""
+        loadmore = self.C_MsgList.GetChildren()[0]
+        top = self.C_MsgList.BoundingRectangle.top
+        while True:
+            if loadmore.BoundingRectangle.top > top or loadmore.Name == '':
+                break
+            else:
+                self.C_MsgList.WheelUp(wheelTimes=10, waitTime=0.1)
+        self.C_MsgList.WheelUp(wheelTimes=1, waitTime=0.1)
+    
     def CurrentChat(self):
-        return self.ChatBox.TextControl().Name
+        '''获取当前聊天对象名'''
+        uia.SetGlobalSearchTimeout(1)
+        try:
+            currentname = self.ChatBox.TextControl(searchDepth=15).Name
+            return currentname
+        except:
+            return None
+        finally:
+            uia.SetGlobalSearchTimeout(10)
 
     
  
