@@ -55,7 +55,7 @@ msgs = wx.GetAllMessage(savepic=True)   # 获取聊天记录，及自动下载�
 如果遇到问题或者有新的想法，希望您可以通过以下两种方式联系我进行改进：
 - [点击前往此页面留下您的问题](https://github.com/cluic/wxauto/issues/new/choose)
 - 邮箱：tikic@qq.com
-- 微信：
+- 微信（请备注wxauto）：
 - ![微信](https://github.com/cluic/wxauto/blob/WeChat3.9.8/utils/wxqrcode.png)
 
 
