@@ -157,15 +157,18 @@ class WeChat:
             self.SessionItemList = []
         SessionList = {}
         for i in range(100):
-            try:
-                name, amount = self.GetSessionAmont(self.SessionItem)
-            except:
-                break
-            if name not in self.SessionItemList:
-                self.SessionItemList.append(name)
-            if name not in SessionList:
-                SessionList[name] = amount
+            if self.SessionItem.BoundingRectangle.width() != 0:
+                try:
+                    name, amount = self.GetSessionAmont(self.SessionItem)
+                except:
+                    break
+                if name not in self.SessionItemList:
+                    self.SessionItemList.append(name)
+                if name not in SessionList:
+                    SessionList[name] = amount
             self.SessionItem = self.SessionItem.GetNextSiblingControl()
+            if not self.SessionItem:
+                break
             
         if newmessage:
             return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
