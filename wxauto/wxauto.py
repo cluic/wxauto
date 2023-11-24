@@ -30,6 +30,7 @@ class WeChat:
         self.VERSION = '3.9.8.15'
         self.language = language
         self.UiaAPI = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
+        self._show()
         self.SessionItemList = []
         MainControl1 = [i for i in self.UiaAPI.GetChildren() if not i.ClassName][0]
         MainControl2 = MainControl1.GetChildren()[0]
