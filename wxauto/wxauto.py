@@ -72,6 +72,8 @@ class WeChat:
     def _show(self):
         HWND = FindWindow(classname='WeChatMainWndForPC')
         win32gui.ShowWindow(HWND, 1)
+        win32gui.SetWindowPos(self.HWND, -1, 0, 0, 0, 0, 3)
+        win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
         self.UiaAPI.SwitchToThisWindow()
         
     def _split(self, MsgItem):
