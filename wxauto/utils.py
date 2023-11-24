@@ -1,5 +1,5 @@
+from PIL import ImageGrab
 import win32clipboard
-import pyscreenshot
 import win32gui
 import win32api
 import win32con
@@ -11,13 +11,14 @@ from ctypes import (
     c_bool,
     sizeof
 )
+import time
 import os
 
 
 def IsRedPixel(uicontrol):
     rect = uicontrol.BoundingRectangle
     bbox = (rect.left, rect.top, rect.right, rect.bottom)
-    img = pyscreenshot.grab(bbox)
+    img = ImageGrab.grab(bbox=bbox)
     return any(p[0] > p[1] and p[0] > p[2] for p in img.getdata())
 
 class DROPFILES(Structure):
@@ -35,12 +36,22 @@ pDropFiles.fWide = True
 matedata = bytes(pDropFiles)
 
 def SetClipboardText(text):
-    try:
-        win32clipboard.OpenClipboard()
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
-    finally:
-        win32clipboard.CloseClipboard()
+    t0 = time.time()
+    while True:
+        if time.time() - t0 > 10:
+            raise TimeoutError(f"设置剪贴板超时！ --> {text}")
+        try:
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
+            break
+        except:
+            pass
+        finally:
+            try:
+                win32clipboard.CloseClipboard()
+            except:
+                pass
 
 def SetClipboardFiles(paths):
     for file in paths:
@@ -48,13 +59,22 @@ def SetClipboardFiles(paths):
             raise FileNotFoundError(f"file ({file}) not exists!")
     files = ("\0".join(paths)).replace("/", "\\")
     data = files.encode("U16")[2:]+b"\0\0"
-    win32clipboard.OpenClipboard()
-    try:
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(
-        win32clipboard.CF_HDROP, matedata+data)
-    finally:
-        win32clipboard.CloseClipboard()
+    t0 = time.time()
+    while True:
+        if time.time() - t0 > 10:
+            raise TimeoutError(f"设置剪贴板文件超时！ --> {paths}")
+        try:
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardData(win32clipboard.CF_HDROP, matedata+data)
+            break
+        except:
+            pass
+        finally:
+            try:
+                win32clipboard.CloseClipboard()
+            except:
+                pass
         
 def GetText(HWND):
     length = win32gui.SendMessage(HWND, win32con.WM_GETTEXTLENGTH)*2
