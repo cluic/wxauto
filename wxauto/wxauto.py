@@ -330,15 +330,27 @@ class WeChat:
         return msgs
     
     def LoadMoreMessage(self):
-        """加载当前聊天页面更多聊天信息"""
+        """加载当前聊天页面更多聊天信息
+        
+        Returns:
+            bool: 是否成功加载更多聊天信息
+        """
         loadmore = self.C_MsgList.GetChildren()[0]
+        loadmore_top = loadmore.BoundingRectangle.top
         top = self.C_MsgList.BoundingRectangle.top
         while True:
             if loadmore.BoundingRectangle.top > top or loadmore.Name == '':
+                isload = True
                 break
             else:
                 self.C_MsgList.WheelUp(wheelTimes=10, waitTime=0.1)
+                if loadmore.BoundingRectangle.top == loadmore_top:
+                    isload = False
+                    break
+                else:
+                    loadmore_top = loadmore.BoundingRectangle.top
         self.C_MsgList.WheelUp(wheelTimes=1, waitTime=0.1)
+        return isload
     
     def CurrentChat(self):
         '''获取当前聊天对象名'''
