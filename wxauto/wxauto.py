@@ -4,6 +4,7 @@ Update: 2023-11-24
 Version: 3.9.8.15
 """
 
+import uiautomation as uia
 from .languages import *
 from .utils import *
 from .errors import *
