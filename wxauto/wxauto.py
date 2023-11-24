@@ -1,9 +1,10 @@
 """
 Author: cluic
+Update: 2023-11-24
 Version: 3.9.8.15
-Update: 2023-11-23
 """
-import uiautomation as uia
+
+from . import uiautomation as uia
 from .languages import *
 from .utils import *
 from .errors import *
@@ -70,8 +71,8 @@ class WeChat:
         return MAIN_LANGUAGE[text][self.language]
     
     def _show(self):
-        HWND = FindWindow(classname='WeChatMainWndForPC')
-        win32gui.ShowWindow(HWND, 1)
+        self.HWND = FindWindow(classname='WeChatMainWndForPC')
+        win32gui.ShowWindow(self.HWND, 1)
         win32gui.SetWindowPos(self.HWND, -1, 0, 0, 0, 0, 3)
         win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
         self.UiaAPI.SwitchToThisWindow()
@@ -215,6 +216,8 @@ class WeChat:
             who (str): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
             clear (bool, optional): 是否清除原本的内容，
         """
+        if not msg:
+            return None
         if who:
             try:
                 editbox = self.ChatBox.EditControl(searchDepth=10)
@@ -233,8 +236,15 @@ class WeChat:
         self._show()
         if not editbox.HasKeyboardFocus:
             editbox.Click(simulateMove=False)
-        SetClipboardText(msg)
-        editbox.SendKeys('{Ctrl}v')
+        
+        t0 = time.time()
+        while True:
+            if time.time() - t0 > 10:
+                raise TimeoutError(f'发送消息超时 --> {editbox.Name} - {msg}')
+            SetClipboardText(msg)
+            editbox.SendKeys('{Ctrl}v')
+            if editbox.GetValuePattern().Value:
+                break
         editbox.SendKeys('{Enter}')
         
     def SendFiles(self, filepath, who=None):
@@ -266,17 +276,27 @@ class WeChat:
         
         if filelist:
             self._show()
-            try:
-                if who in self.CurrentChat() and who in self.ChatBox.EditControl(searchDepth=10).Name:
-                    pass
-                else:
+            if who:
+                try:
+                    if who in self.CurrentChat() and who in self.ChatBox.EditControl(searchDepth=10).Name:
+                        pass
+                    else:
+                        self.ChatWith(who)
+                except:
                     self.ChatWith(who)
-            except:
-                self.ChatWith(who)
-            SetClipboardFiles(filelist)
-            editbox = self.ChatBox.EditControl(Name=who)
+                editbox = self.ChatBox.EditControl(Name=who)
+            else:
+                editbox = self.ChatBox.EditControl()
             editbox.SendKeys('{Ctrl}a', waitTime=0)
-            editbox.SendKeys('{Ctrl}v')
+            t0 = time.time()
+            while True:
+                if time.time() - t0 > 10:
+                    raise TimeoutError(f'发送文件超时 --> {filelist}')
+                SetClipboardFiles(filelist)
+                time.sleep(0.2)
+                editbox.SendKeys('{Ctrl}v')
+                if editbox.GetValuePattern().Value:
+                    break
             editbox.SendKeys('{Enter}')
             return True
         else:
