@@ -173,6 +173,7 @@ class WeChat:
             self.SessionItem = self.SessionItem.GetNextSiblingControl()
             if not self.SessionItem:
                 break
+        self.ChatWith(self._lang('文件传输助手'))
             
         if newmessage:
             return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
