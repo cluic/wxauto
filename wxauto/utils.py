@@ -1,5 +1,6 @@
 from PIL import ImageGrab
 import win32clipboard
+import win32process
 import win32gui
 import win32api
 import win32con
@@ -11,8 +12,29 @@ from ctypes import (
     c_bool,
     sizeof
 )
+import psutil
 import time
 import os
+
+def GetPathByHwnd(hwnd):
+    try:
+        thread_id, process_id = win32process.GetWindowThreadProcessId(hwnd)
+        process = psutil.Process(process_id)
+        return process.exe()
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+def GetVersionByPath(file_path):
+    try:
+        info = win32api.GetFileVersionInfo(file_path, '\\')
+        version = "{}.{}.{}.{}".format(win32api.HIWORD(info['FileVersionMS']),
+                                        win32api.LOWORD(info['FileVersionMS']),
+                                        win32api.HIWORD(info['FileVersionLS']),
+                                        win32api.LOWORD(info['FileVersionLS']))
+    except:
+        version = None
+    return version
 
 
 def IsRedPixel(uicontrol):
