@@ -81,3 +81,11 @@ IMAGE_LANGUAGE = {
     '': {'cn': '', 'cn_t': '', 'en': ''},
     '': {'cn': '', 'cn_t': '', 'en': ''}
 }
+
+WARNING = {
+    '版本不一致': {
+        'cn': '当前微信客户端版本为{}，与当前库版本{}不一致，可能会导致部分功能无法正常使用，请注意判断',
+        'cn_t': '當前微信客戶端版本為{}，與當前庫版本{}不一致，可能會導致部分功能無法正常使用，請注意判斷',
+        'en': 'The current WeChat client version is {}, which is inconsistent with the current library version {}, which may cause some functions to fail to work properly. Please pay attention to judgment'
+    }
+}
