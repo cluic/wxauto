@@ -156,6 +156,7 @@ class WeChat:
                     newmessages[session] = self.GetAllMessage()[-sessiondict[session]:]
             else:
                 break
+        self.ChatWith(self._lang('文件传输助手'))
         return newmessages
     
     def GetSessionList(self, reset=False, newmessage=False):
