@@ -1,14 +1,14 @@
 """
-Author: cluic
-Update: 2023-11-24
+Author: Cluic
+Update: 2023-11-27
 Version: 3.9.8.15
 """
 
-import uiautomation as uia
+from . import uiautomation as uia
 from .languages import *
 from .utils import *
 from .errors import *
-import warnings
+from .color import *
 import datetime
 import time
 import os
@@ -66,6 +66,8 @@ class WeChat:
         self.nickname = self.A_MyIcon.Name
         print(f'初始化成功，获取到已登录窗口：{self.nickname}')
         
+        
+        
     def _lang(self, text, langtype='MAIN'):
         if langtype == 'MAIN':
             return MAIN_LANGUAGE[text][self.language]
@@ -77,7 +79,7 @@ class WeChat:
         wxpath = GetPathByHwnd(self.HWND)
         wxversion = GetVersionByPath(wxpath)
         if wxversion != self.VERSION:
-            warnings.warn('\n'+self._lang('版本不一致', 'WARNING').format(wxversion, self.VERSION), stacklevel=2)
+            Warnings.lightred(self._lang('版本不一致', 'WARNING').format(wxversion, self.VERSION), stacklevel=2)
             return False
     
     def _show(self):
@@ -142,7 +144,7 @@ class WeChat:
         """是否有新消息"""
         return IsRedPixel(self.A_ChatIcon)
     
-    def GetAllNewMessage(self, auto_switch='文件传输助手'):
+    def GetAllNewMessage(self):
         """获取所有新消息"""
         newmessages = {}
         while True:
@@ -154,7 +156,6 @@ class WeChat:
                     newmessages[session] = self.GetAllMessage()[-sessiondict[session]:]
             else:
                 break
-        self.ChatWith(self._lang('文件传输助手'))
         return newmessages
     
     def GetSessionList(self, reset=False, newmessage=False):
@@ -271,7 +272,7 @@ class WeChat:
         filelist = []
         if isinstance(filepath, str):
             if not os.path.exists(filepath):
-                warnings.warn(f'未找到文件：{filepath}，无法成功发送')
+                Warnings.lightred(f'未找到文件：{filepath}，无法成功发送', stacklevel=2)
                 return False
             else:
                 filelist.append(filepath)
@@ -280,9 +281,9 @@ class WeChat:
                 if os.path.exists(i):
                     filelist.append(i)
                 else:
-                    warnings.warn(f'未找到文件：{i}')
+                    Warnings.lightred(f'未找到文件：{i}', stacklevel=2)
         else:
-            warnings.warn(f'filepath参数格式错误：{type(filepath)}，应为str、list、tuple、set格式')
+            Warnings.lightred(f'filepath参数格式错误：{type(filepath)}，应为str、list、tuple、set格式', stacklevel=2)
             return False
         
         if filelist:
@@ -311,7 +312,7 @@ class WeChat:
             editbox.SendKeys('{Enter}')
             return True
         else:
-            warnings.warn('所有文件都无法成功发送')
+            Warnings.lightred('所有文件都无法成功发送', stacklevel=2)
             return False
             
     def GetAllMessage(self, savepic=False):
@@ -429,7 +430,7 @@ class WeChatImage:
             self.t_ocr.Click(simulateMove=False)
         ctrls = self.PhotoBox.GetChildren()
         if len(ctrls) != 3:
-            warnings.warn('获取文字识别失败')
+            Warnings.lightred('获取文字识别失败', stacklevel=2)
         else:
             TranslateControl = ctrls[-1]
             result = TranslateControl.TextControl().Name
@@ -472,7 +473,7 @@ class WeChatImage:
             self.t_previous.Click(simulateMove=False)
             return True
         else:
-            warnings.warn('上一张按钮不可用')
+            Warnings.lightred('上一张按钮不可用', stacklevel=2)
             return False
         
     def Next(self):
@@ -482,7 +483,7 @@ class WeChatImage:
             self.t_next.Click(simulateMove=False)
             return True
         else:
-            warnings.warn('下一张按钮不可用')
+            Warnings.lightred('已经是最新的图片了', stacklevel=2)
             return False
         
     def Close(self):
