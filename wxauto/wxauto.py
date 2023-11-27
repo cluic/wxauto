@@ -30,6 +30,7 @@ class WeChat:
         """
         self.VERSION = '3.9.8.15'
         self.language = language
+        self._checkversion()
         self.UiaAPI = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
         self._show()
         self.SessionItemList = []
@@ -65,10 +66,19 @@ class WeChat:
         self.nickname = self.A_MyIcon.Name
         print(f'初始化成功，获取到已登录窗口：{self.nickname}')
         
-        
-        
-    def _lang(self, text):
-        return MAIN_LANGUAGE[text][self.language]
+    def _lang(self, text, langtype='MAIN'):
+        if langtype == 'MAIN':
+            return MAIN_LANGUAGE[text][self.language]
+        elif langtype == 'WARNING':
+            return WARNING[text][self.language]
+    
+    def _checkversion(self):
+        self.HWND = FindWindow(classname='WeChatMainWndForPC')
+        wxpath = GetPathByHwnd(self.HWND)
+        wxversion = GetVersionByPath(wxpath)
+        if wxversion != self.VERSION:
+            warnings.warn('\n'+self._lang('版本不一致', 'WARNING').format(wxversion, self.VERSION), stacklevel=2)
+            return False
     
     def _show(self):
         self.HWND = FindWindow(classname='WeChatMainWndForPC')
@@ -132,7 +142,7 @@ class WeChat:
         """是否有新消息"""
         return IsRedPixel(self.A_ChatIcon)
     
-    def GetAllNewMessage(self):
+    def GetAllNewMessage(self, auto_switch='文件传输助手'):
         """获取所有新消息"""
         newmessages = {}
         while True:
@@ -144,6 +154,7 @@ class WeChat:
                     newmessages[session] = self.GetAllMessage()[-sessiondict[session]:]
             else:
                 break
+        self.ChatWith(self._lang('文件传输助手'))
         return newmessages
     
     def GetSessionList(self, reset=False, newmessage=False):
@@ -173,7 +184,6 @@ class WeChat:
             self.SessionItem = self.SessionItem.GetNextSiblingControl()
             if not self.SessionItem:
                 break
-        self.ChatWith(self._lang('文件传输助手'))
             
         if newmessage:
             return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
