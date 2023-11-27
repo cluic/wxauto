@@ -460,8 +460,17 @@ class WeChatImage:
             handle = FindWindow(name='另存为...')
             if handle:
                 break
-        edithandle = [i for i in GetAllWindowExs(handle) if i[1] == 'Edit' and i[-1]][0][0]
-        savehandle = FindWinEx(handle, classname='Button', name='保存(&S)')[0]
+        t0 = time.time()
+        while True:
+            if time.time() - t0 > timeout:
+                raise TimeoutError('下载超时')
+            try:
+                edithandle = [i for i in GetAllWindowExs(handle) if i[1] == 'Edit' and i[-1]][0][0]
+                savehandle = FindWinEx(handle, classname='Button', name='保存(&S)')[0]
+                if edithandle and savehandle:
+                    break
+            except:
+                pass
         win32gui.SendMessage(edithandle, win32con.WM_SETTEXT, '', str(savepath))
         win32gui.SendMessage(savehandle, win32con.BM_CLICK, 0, 0)
         return savepath
