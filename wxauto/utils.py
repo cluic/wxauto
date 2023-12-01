@@ -40,7 +40,7 @@ def GetVersionByPath(file_path):
 def IsRedPixel(uicontrol):
     rect = uicontrol.BoundingRectangle
     bbox = (rect.left, rect.top, rect.right, rect.bottom)
-    img = ImageGrab.grab(bbox=bbox)
+    img = ImageGrab.grab(bbox=bbox, all_screens=True)
     return any(p[0] > p[1] and p[0] > p[2] for p in img.getdata())
 
 class DROPFILES(Structure):
