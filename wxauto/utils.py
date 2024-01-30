@@ -57,7 +57,9 @@ pDropFiles.pFiles = sizeof(DROPFILES)
 pDropFiles.fWide = True
 matedata = bytes(pDropFiles)
 
-def SetClipboardText(text):
+def SetClipboardText(text: str):
+    if not isinstance(text, str):
+        raise TypeError(f"参数类型必须为str")
     t0 = time.time()
     while True:
         if time.time() - t0 > 10:
@@ -75,7 +77,7 @@ def SetClipboardText(text):
             except:
                 pass
 
-def SetClipboardFiles(paths):
+def SetClipboardFiles(paths: list):
     for file in paths:
         if not os.path.exists(file):
             raise FileNotFoundError(f"file ({file}) not exists!")
