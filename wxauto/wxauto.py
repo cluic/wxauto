@@ -1,12 +1,13 @@
 """
 Author: Cluic
-Update: 2023-11-27
+Update: 2024-02-06
 Version: 3.9.8.15
 """
 
 import uiautomation as uia
 from .languages import *
 from .utils import *
+from .elements import *
 from .errors import *
 from .color import *
 import datetime
@@ -14,14 +15,8 @@ import time
 import os
 import re
 
-class WxParam:
-    SYS_TEXT_HEIGHT = 33
-    TIME_TEXT_HEIGHT = 34
-    RECALL_TEXT_HEIGHT = 45
-    CHAT_TEXT_HEIGHT = 52
-    CHAT_IMG_HEIGHT = 117
 
-class WeChat:
+class WeChat(WeChatBase):
     def __init__(self, language='cn') -> None:
         """微信UI自动化实例
 
@@ -30,6 +25,8 @@ class WeChat:
         """
         self.VERSION = '3.9.8.15'
         self.language = language
+        self.lastmsgid = None
+        self.listen = dict()
         self._checkversion()
         self.UiaAPI = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
         self._show()
@@ -65,14 +62,6 @@ class WeChat:
         
         self.nickname = self.A_MyIcon.Name
         print(f'初始化成功，获取到已登录窗口：{self.nickname}')
-        
-        
-        
-    def _lang(self, text, langtype='MAIN'):
-        if langtype == 'MAIN':
-            return MAIN_LANGUAGE[text][self.language]
-        elif langtype == 'WARNING':
-            return WARNING[text][self.language]
     
     def _checkversion(self):
         self.HWND = FindWindow(classname='WeChatMainWndForPC')
@@ -88,34 +77,6 @@ class WeChat:
         win32gui.SetWindowPos(self.HWND, -1, 0, 0, 0, 0, 3)
         win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
         self.UiaAPI.SwitchToThisWindow()
-        
-    def _split(self, MsgItem):
-        uia.SetGlobalSearchTimeout(0)
-        MsgItemName = MsgItem.Name
-        if MsgItem.BoundingRectangle.height() == WxParam.SYS_TEXT_HEIGHT:
-            Msg = ['SYS', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
-        elif MsgItem.BoundingRectangle.height() == WxParam.TIME_TEXT_HEIGHT:
-            Msg = ['Time', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
-        elif MsgItem.BoundingRectangle.height() == WxParam.RECALL_TEXT_HEIGHT:
-            if '撤回' in MsgItemName:
-                Msg = ['Recall', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
-            else:
-                Msg = ['SYS', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
-        else:
-            Index = 1
-            User = MsgItem.ButtonControl(foundIndex=Index)
-            try:
-                while True:
-                    if User.Name == '':
-                        Index += 1
-                        User = MsgItem.ButtonControl(foundIndex=Index)
-                    else:
-                        break
-                Msg = [User.Name, MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
-            except:
-                Msg = ['SYS', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
-        uia.SetGlobalSearchTimeout(10.0)
-        return Msg
     
     def GetSessionAmont(self, SessionItem):
         """获取聊天对象名和新消息条数
@@ -142,7 +103,34 @@ class WeChat:
     
     def CheckNewMessage(self):
         """是否有新消息"""
+        self._show()
         return IsRedPixel(self.A_ChatIcon)
+    
+    def GetNextNewMessage(self, savepic=False):
+        """获取下一个新消息"""
+        msgs_ = self.GetAllMessage()
+        if self.lastmsgid is not None and self.lastmsgid in [i[-1] for i in msgs_[:-1]]:
+            print('获取当前窗口新消息')
+            idx = [i[-1] for i in msgs_].index(self.lastmsgid)
+            MsgItems = self.C_MsgList.GetChildren()[idx+1:]
+            msgs = self._getmsgs(MsgItems, savepic)
+            return {self.CurrentChat(): msgs}
+
+        elif self.CheckNewMessage():
+            print('获取其他窗口新消息')
+            while True:
+                self.A_ChatIcon.DoubleClick(simulateMove=False)
+                sessiondict = self.GetSessionList(newmessage=True)
+                if sessiondict:
+                    break
+            for session in sessiondict:
+                self.ChatWith(session)
+                MsgItems = self.C_MsgList.GetChildren()[-sessiondict[session]:]
+                msgs = self._getmsgs(MsgItems, savepic)
+                return {session:msgs}
+        else:
+            # print('没有新消息')
+            return None
     
     def GetAllNewMessage(self):
         """获取所有新消息"""
@@ -316,7 +304,7 @@ class WeChat:
             Warnings.lightred('所有文件都无法成功发送', stacklevel=2)
             return False
             
-    def GetAllMessage(self, savepic=False):
+    def GetAllMessage(self, savepic=False, n=0):
         '''获取当前窗口中加载的所有聊天记录
         
         Args:
@@ -325,44 +313,8 @@ class WeChat:
         Returns:
             list: 聊天记录信息
         '''
-        msgs = []
         MsgItems = self.C_MsgList.GetChildren()
-        for MsgItem in MsgItems:
-            msgs.append(self._split(MsgItem))
-
-        if not [i for i in msgs if i[1] == f"[{self._lang('图片')}]"]:
-            return msgs
-        if savepic:
-            paths = list()
-            imgcontrol = self.C_MsgList.ListItemControl(Name=f"[{self._lang('图片')}]").ButtonControl(Name='')
-            if imgcontrol.BoundingRectangle.top < self.C_MsgList.BoundingRectangle.top:
-                # 上滚动
-                while True:
-                    self.C_MsgList.WheelUp(wheelTimes=1, waitTime=0.1)
-                    if imgcontrol.BoundingRectangle.top > self.C_MsgList.BoundingRectangle.top:
-                        break
-            elif imgcontrol.BoundingRectangle.bottom > self.C_MsgList.BoundingRectangle.bottom:
-                # 下滚动
-                while True:
-                    self.C_MsgList.WheelDown(wheelTimes=1, waitTime=0.1)
-                    if imgcontrol.BoundingRectangle.bottom < self.C_MsgList.BoundingRectangle.bottom:
-                        break
-            imgcontrol.Click(simulateMove=False)
-            imgobj = WeChatImage()
-            savepath = imgobj.Save()
-            paths.append(savepath)
-            while True:
-                if imgobj.Next():
-                    savepath = imgobj.Save()
-                    paths.append(savepath)
-                else:
-                    imgobj.Close()
-                    break
-            idx = 0
-            for msg in msgs:
-                if msg[1] == f"[{self._lang('图片')}]":
-                    msg[1] = paths[idx]
-                    idx += 1
+        msgs = self._getmsgs(MsgItems, savepic)
         return msgs
     
     def LoadMoreMessage(self):
@@ -399,103 +351,57 @@ class WeChat:
         finally:
             uia.SetGlobalSearchTimeout(10)
 
-    
- 
-class WeChatImage:
-    def __init__(self, language='cn') -> None:
-        self.language = language
-        self.api = uia.WindowControl(ClassName='ImagePreviewWnd', searchDepth=1)
-        MainControl1 = [i for i in self.api.GetChildren() if not i.ClassName][0]
-        self.ToolsBox, self.PhotoBox = MainControl1.GetChildren()
-        
-        # tools按钮
-        self.t_previous = self.ToolsBox.ButtonControl(Name=self._lang('上一张'))
-        self.t_next = self.ToolsBox.ButtonControl(Name=self._lang('下一张'))
-        self.t_translate = self.ToolsBox.ButtonControl(Name=self._lang('翻译'))
-        self.t_ocr = self.ToolsBox.ButtonControl(Name=self._lang('提取文字'))
-        self.t_save = self.ToolsBox.ButtonControl(Name=self._lang('另存为...'))
-        self.t_qrcode = self.ToolsBox.ButtonControl(Name=self._lang('识别图中二维码'))
-    
-    def _lang(self, text):
-        return IMAGE_LANGUAGE[text][self.language]
-    
-    def _show(self):
-        HWND = FindWindow(classname='ImagePreviewWnd')
-        win32gui.ShowWindow(HWND, 1)
-        self.api.SwitchToThisWindow()
-        
-    def OCR(self):
-        result = ''
-        ctrls = self.PhotoBox.GetChildren()
-        if len(ctrls) == 2:
-            self.t_ocr.Click(simulateMove=False)
-        ctrls = self.PhotoBox.GetChildren()
-        if len(ctrls) != 3:
-            Warnings.lightred('获取文字识别失败', stacklevel=2)
-        else:
-            TranslateControl = ctrls[-1]
-            result = TranslateControl.TextControl().Name
-        return result
-
-    
-    def Save(self, savepath='', timeout=10):
-        """保存图片
-
-        Args:
-            savepath (str): 绝对路径，包括文件名和后缀，例如："D:/Images/微信图片_xxxxxx.jpg"
-            （如果不填，则默认为当前脚本文件夹下，新建一个“微信图片”的文件夹，保存在该文件夹内）
+    def GetNewFriends(self):
+        """获取新的好友申请列表
         
         Returns:
-            str: 文件保存路径，即savepath
+            list: 新的好友申请列表，元素为NewFriendsElement对象，可直接调用Accept方法
+
+        Example:
+            >>> wx = WeChat()
+            >>> newfriends = wx.GetNewFriends()
+            >>> tags = ['标签1', '标签2']
+            >>> for friend in newfriends:
+            >>>     remark = f'备注{friend.name}'
+            >>>     friend.Accept(remark=remark, tags=tags)  # 接受好友请求，并设置备注和标签
         """
-        if not savepath:
-            savepath = os.path.join(os.getcwd(), '微信图片', f"微信图片_{datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')}.jpg")
-        if not os.path.exists(os.path.split(savepath)[0]):
-            os.makedirs(os.path.split(savepath)[0])
-            
-        self.t_save.Click(simulateMove=False)
-        t0 = time.time()
-        while True:
-            if time.time() - t0 > timeout:
-                raise TimeoutError('下载超时')
-            handle = FindWindow(name='另存为...')
-            if handle:
-                break
-        t0 = time.time()
-        while True:
-            if time.time() - t0 > timeout:
-                raise TimeoutError('下载超时')
-            try:
-                edithandle = [i for i in GetAllWindowExs(handle) if i[1] == 'Edit' and i[-1]][0][0]
-                savehandle = FindWinEx(handle, classname='Button', name='保存(&S)')[0]
-                if edithandle and savehandle:
-                    break
-            except:
-                pass
-        win32gui.SendMessage(edithandle, win32con.WM_SETTEXT, '', str(savepath))
-        win32gui.SendMessage(savehandle, win32con.BM_CLICK, 0, 0)
-        return savepath
-        
-    def Previous(self):
-        """上一张"""
-        if self.t_previous.IsKeyboardFocusable:
-            self._show()
-            self.t_previous.Click(simulateMove=False)
-            return True
-        else:
-            Warnings.lightred('上一张按钮不可用', stacklevel=2)
-            return False
-        
-    def Next(self):
-        """下一张"""
-        if self.t_next.IsKeyboardFocusable:
-            self._show()
-            self.t_next.Click(simulateMove=False)
-            return True
-        else:
-            Warnings.lightred('已经是最新的图片了', stacklevel=2)
-            return False
-        
-    def Close(self):
         self._show()
-        self.api.SendKeys('{Esc}')
+        self.SwitchToContact()
+        self.SessionBox.ButtonControl(Name='ContactListItem').Click(simulateMove=False)
+        NewFriendsList = [NewFriendsElement(i, self) for i in self.ChatBox.ListControl(Name='新的朋友').GetChildren()]
+        AcceptableNewFriendsList = [i for i in NewFriendsList if i.acceptable]
+        print(f'获取到 {len(AcceptableNewFriendsList)} 条新的好友申请')
+        return AcceptableNewFriendsList
+    
+    def AddListenChat(self, who, savepic=False):
+        """添加监听对象
+        
+        Args:
+            who (str): 要监听的聊天对象名
+            savepic (bool, optional): 是否自动保存聊天图片，只针对该聊天对象有效
+        """
+        exists = uia.WindowControl(searchDepth=1, ClassName='ChatWnd', Name=who).Exists(maxSearchSeconds=0.1)
+        if not exists:
+            self.ChatWith(who)
+            self.SessionBox.ListItemControl(Name=who).DoubleClick(simulateMove=False)
+        self.listen[who] = ChatWnd(who, self.language)
+        self.listen[who].savepic = savepic
+
+    def GetListenMessage(self):
+        """获取监听对象的新消息"""
+        msgs = {}
+        for who in self.listen:
+            chat = self.listen[who]
+            chat._show()
+            msgs[who] = chat.GetNewMessage(savepic=chat.savepic)
+        return msgs
+
+    def SwitchToContact(self):
+        """切换到通讯录页面"""
+        self._show()
+        self.A_ContactsIcon.Click(simulateMove=False)
+
+    def SwitchToChat(self):
+        """切换到聊天页面"""
+        self._show()
+        self.A_ChatIcon.Click(simulateMove=False)
