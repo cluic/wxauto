@@ -22,7 +22,7 @@ cmd窗口：
 ```shell
 git clone https://github.com/cluic/wxauto.git
 cd wxauto
-pip install -r rquirements.txt
+pip install -r requirements.txt
 ```
 python窗口：
 ```python
