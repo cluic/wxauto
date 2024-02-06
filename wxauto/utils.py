@@ -13,6 +13,7 @@ from ctypes import (
     sizeof
 )
 import psutil
+import shutil
 import time
 import os
 
@@ -59,7 +60,7 @@ matedata = bytes(pDropFiles)
 
 def SetClipboardText(text: str):
     if not isinstance(text, str):
-        raise TypeError(f"参数类型必须为str")
+        raise TypeError(f"参数类型必须为str --> {text}")
     t0 = time.time()
     while True:
         if time.time() - t0 > 10:
@@ -77,7 +78,28 @@ def SetClipboardText(text: str):
             except:
                 pass
 
-def SetClipboardFiles(paths: list):
+try:
+    from anytree import Node, RenderTree
+
+    def GetAllControl(ele):
+        def findall(ele, n=0, node=None):
+            nn = '\n'
+            nodename = f"[{ele.ControlTypeName}](\"{ele.ClassName}\", \"{ele.Name.replace(nn, '')}\")"
+            if not node:
+                node1 = Node(nodename)
+            else:
+                node1 = Node(nodename, parent=node)
+            eles = ele.GetChildren()
+            for ele1 in eles:
+                findall(ele1, n+1, node1)
+            return node1
+        tree = RenderTree(findall(ele))
+        for pre, fill, node in tree:
+            print(f"{pre}{node.name}")
+except:
+    pass
+
+def SetClipboardFiles(paths):
     for file in paths:
         if not os.path.exists(file):
             raise FileNotFoundError(f"file ({file}) not exists!")
@@ -99,7 +121,33 @@ def SetClipboardFiles(paths: list):
                 win32clipboard.CloseClipboard()
             except:
                 pass
-        
+
+def PasteFile(folder):
+    folder = os.path.realpath(folder)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    t0 = time.time()
+    while True:
+        if time.time() - t0 > 10:
+            raise TimeoutError(f"读取剪贴板文件超时！")
+        try:
+            win32clipboard.OpenClipboard()
+            if win32clipboard.IsClipboardFormatAvailable(win32clipboard.CF_HDROP):
+                files = win32clipboard.GetClipboardData(win32clipboard.CF_HDROP)
+                for file in files:
+                    filename = os.path.basename(file)
+                    dest_file = os.path.join(folder, filename)
+                    shutil.copy2(file, dest_file)
+                    return True
+            else:
+                print("剪贴板中没有文件")
+                return False
+        except:
+            pass
+        finally:
+            win32clipboard.CloseClipboard()
+
 def GetText(HWND):
     length = win32gui.SendMessage(HWND, win32con.WM_GETTEXTLENGTH)*2
     buffer = win32gui.PyMakeBuffer(length)
@@ -142,3 +190,28 @@ def FindWinEx(HWND, classname=None, name=None) -> list:
     else:
         hwnds = hwnds_classname + hwnds_name
     return hwnds
+
+def ClipboardFormats(unit=0, *units):
+    units = list(units)
+    win32clipboard.OpenClipboard()
+    u = win32clipboard.EnumClipboardFormats(unit)
+    win32clipboard.CloseClipboard()
+    units.append(u)
+    if u:
+        units = ClipboardFormats(u, *units)
+    return units
+
+def ReadClipboardData():
+    Dict = {}
+    for i in ClipboardFormats():
+        if i == 0:
+            continue
+        win32clipboard.OpenClipboard()
+        try:
+            filenames = win32clipboard.GetClipboardData(i)
+            win32clipboard.CloseClipboard()
+        except:
+            win32clipboard.CloseClipboard()
+            raise ValueError
+        Dict[str(i)] = filenames
+    return Dict
