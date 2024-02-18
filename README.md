@@ -82,9 +82,5 @@ msgs = wx.GetAllMessage(savepic=True)   # 获取聊天记录，及自动下载�
 ## 免责声明
 代码仅供交流学习使用，请勿用于非法用途和商业用途！如因此产生任何法律纠纷，均与作者无关！
 
-## 支持
-非常感谢您对该项目的支持
 
-![支付宝](https://github.com/cluic/wxauto/blob/WeChat3.9.8/utils/alipay.png)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-![微信](https://github.com/cluic/wxauto/blob/WeChat3.9.8/utils/wxpay.png)
 
