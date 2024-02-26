@@ -4,7 +4,10 @@
 
 Windows版本微信客户端自动化，可实现简单的发送、接收微信消息、保存聊天图片
 
-[点此获取相关版本微信安装包](https://1drv.ms/f/s!AqQw88ELOBiTgcAN_bBQlBaz60PTBg?e=oGoeju)
+相关安装包下载：
+
+[OneDrive](https://1drv.ms/f/s!AqQw88ELOBiTgcAN_bBQlBaz60PTBg?e=oGoeju)
+[百度云](https://pan.baidu.com/s/1FvSw0Fk54GGvmQq8xSrNjA?pwd=vsmj)
 
 |  环境  | 版本 |
 | :----: | :--: |
