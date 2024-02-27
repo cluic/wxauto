@@ -5,11 +5,12 @@
 Windows版本微信客户端自动化，可实现简单的发送、接收微信消息、保存聊天图片
 
 **相关版本安装包下载**：
-[OneDrive](https://1drv.ms/f/s!AqQw88ELOBiTgcAN_bBQlBaz60PTBg?e=oGoeju)
+[OneDrive](https://1drv.ms/f/s!AqQw88ELOBiTgcAN_bBQlBaz60PTBg?e=oGoeju) |
 [百度云](https://pan.baidu.com/s/1FvSw0Fk54GGvmQq8xSrNjA?pwd=vsmj)
 
 **文档**：
-[使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md)
+[使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md) |
+[云服务器部署指南](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md#%E4%BA%94%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%83%A8%E7%BD%B2)
 
 |  环境  | 版本 |
 | :----: | :--: |
