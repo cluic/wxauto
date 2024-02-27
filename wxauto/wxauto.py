@@ -393,7 +393,9 @@ class WeChat(WeChatBase):
         for who in self.listen:
             chat = self.listen[who]
             chat._show()
-            msgs[who] = chat.GetNewMessage(savepic=chat.savepic)
+            msg = chat.GetNewMessage(savepic=chat.savepic)
+            if [i for i in msg if i[0] != 'Self']:
+                msgs[chat] = msg
         return msgs
 
     def SwitchToContact(self):
