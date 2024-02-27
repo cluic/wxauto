@@ -43,7 +43,13 @@ class WeChatBase:
                         User = MsgItem.ButtonControl(foundIndex=Index)
                     else:
                         break
-                Msg = [User.Name, MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
+                winrect = MsgItem.BoundingRectangle
+                mid = (winrect.left + winrect.right)/2
+                if User.BoundingRectangle.left < mid:
+                    name = User.Name
+                else:
+                    name = 'Self'
+                Msg = [name, MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
             except:
                 Msg = ['SYS', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
         uia.SetGlobalSearchTimeout(10.0)
