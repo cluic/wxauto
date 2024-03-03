@@ -217,6 +217,10 @@ class WeChat(WeChatBase):
             who (str): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
             clear (bool, optional): 是否清除原本的内容，
         """
+        if who in self.listen:
+            chat = self.listen[who]
+            chat.SendMsg(msg)
+            return None
         if not msg:
             return None
         if who:
@@ -258,6 +262,10 @@ class WeChat(WeChatBase):
         Returns:
             bool: 是否成功发送文件
         """
+        if who in self.listen:
+            chat = self.listen[who]
+            chat.SendFiles(filepath)
+            return None
         filelist = []
         if isinstance(filepath, str):
             if not os.path.exists(filepath):
