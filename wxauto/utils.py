@@ -18,6 +18,16 @@ import shutil
 import time
 import os
 
+def set_cursor_pos(x, y):
+    win32api.SetCursorPos((x, y))
+    
+def Click(rect):
+    x = (rect.left + rect.right) // 2
+    y = (rect.top + rect.bottom) // 2
+    set_cursor_pos(x, y)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
+    
 def GetPathByHwnd(hwnd):
     try:
         thread_id, process_id = win32process.GetWindowThreadProcessId(hwnd)
