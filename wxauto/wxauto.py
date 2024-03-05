@@ -127,6 +127,7 @@ class WeChat(WeChatBase):
                 self.ChatWith(session)
                 MsgItems = self.C_MsgList.GetChildren()[-sessiondict[session]:]
                 msgs = self._getmsgs(MsgItems, savepic)
+                self.lastmsgid = msgs[-1][-1]
                 return {session:msgs}
         else:
             # print('没有新消息')
