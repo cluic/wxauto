@@ -403,7 +403,8 @@ class WeChat(WeChatBase):
             chat = self.listen[who]
             chat._show()
             msg = chat.GetNewMessage(savepic=chat.savepic)
-            if [i for i in msg if i[0] != 'Self']:
+            # if [i for i in msg if i[0] != 'Self']:
+            if msg:
                 msgs[chat] = msg
         return msgs
 
