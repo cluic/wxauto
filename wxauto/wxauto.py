@@ -273,7 +273,7 @@ class WeChat(WeChatBase):
                 Warnings.lightred(f'未找到文件：{filepath}，无法成功发送', stacklevel=2)
                 return False
             else:
-                filelist.append(filepath)
+                filelist.append(os.path.realpath(filepath))
         elif isinstance(filepath, (list, tuple, set)):
             for i in filepath:
                 if os.path.exists(i):
