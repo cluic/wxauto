@@ -449,3 +449,84 @@ class NewFriendsElement:
                 NewFriendsWnd.PaneControl(ClassName='DropdownWindow').TextControl().Click(simulateMove=False)
 
         NewFriendsWnd.ButtonControl(Name='确定').Click(simulateMove=False)
+
+
+class ContactWnd:
+    def __init__(self):
+        self.UiaAPI = uia.WindowControl(ClassName='ContactManagerWindow', searchDepth=1)
+        self.Sidebar, _, self.ContactBox = self.UiaAPI.PaneControl(ClassName='', searchDepth=3, foundIndex=3).GetChildren()
+
+    def __repr__(self) -> str:
+        return f"<wxauto Contact Window at {hex(id(self))}>"
+
+    def _show(self):
+        self.HWND = FindWindow(classname='ContactManagerWindow')
+        win32gui.ShowWindow(self.HWND, 1)
+        win32gui.SetWindowPos(self.HWND, -1, 0, 0, 0, 0, 3)
+        win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
+        self.UiaAPI.SwitchToThisWindow()
+
+    def GetFriendNum(self):
+        """获取好友人数"""
+        numText = self.Sidebar.PaneControl(Name='全部').TextControl(foundIndex=2).Name
+        return int(re.findall('\d+', numText)[0])
+    
+    def Search(self, keyword):
+        """搜索好友
+
+        Args:
+            keyword (str): 搜索关键词
+        """
+        self.ContactBox.EditControl(Name="搜索").Click(simulateMove=False)
+        self.ContactBox.SendKeys('{Ctrl}{A}')
+        self.ContactBox.SendKeys(keyword)
+
+    def GetAllFriends(self):
+        """获取好友列表"""
+        self._show()
+        contacts_list = []
+        while True:
+            contact_ele_list = self.ContactBox.ListControl().GetChildren()
+            for ele in contact_ele_list:
+                contacts_info = {
+                    'nickname': ele.TextControl().Name,
+                    'remark': ele.ButtonControl(foundIndex=2).Name,
+                    'tags': ele.ButtonControl(foundIndex=3).Name.split('，'),
+                }
+                if contacts_info.get('remark') in ('添加备注', ''):
+                    contacts_info['remark'] = None
+                if contacts_info.get('tags') in (['添加标签'], ['']):
+                    contacts_info['tags'] = None
+                if contacts_info not in contacts_list:
+                    contacts_list.append(contacts_info)
+            bottom = self.ContactBox.ListControl().GetChildren()[-1].BoundingRectangle.top
+            self.ContactBox.WheelDown(wheelTimes=5, waitTime=0.1)
+            if bottom == self.ContactBox.ListControl().GetChildren()[-1].BoundingRectangle.top:
+                return contacts_list
+    
+    def Close(self):
+        """关闭联系人窗口"""
+        self._show()
+        self.UiaAPI.SendKeys('{Esc}')
+
+
+class ContactElement:
+    def __init__(self, ele):
+        self.element = ele
+        self.nickname = ele.TextControl().Name
+        self.remark = ele.ButtonControl(foundIndex=2).Name
+        self.tags = ele.ButtonControl(foundIndex=3).Name.split('，')
+
+    def __repr__(self) -> str:
+        return f"<wxauto Contact Element at {hex(id(self))} ({self.nickname}: {self.remark})>"
+    
+    def EditRemark(self, remark: str):
+        """修改好友备注名
+        
+        Args:
+            remark (str): 新备注名
+        """
+        self.element.ButtonControl(foundIndex=2).Click(simulateMove=False)
+        self.element.SendKeys('{Ctrl}a')
+        self.element.SendKeys(remark)
+        self.element.SendKeys('{Enter}')
