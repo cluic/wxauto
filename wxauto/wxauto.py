@@ -457,6 +457,7 @@ class WeChat(WeChatBase):
         
         Args:
             keywords (str, optional): 搜索关键词，只返回包含关键词的好友列表
+            
         Returns:
             list: 所有好友列表
         """
