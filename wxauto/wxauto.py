@@ -449,12 +449,14 @@ class WeChat(WeChatBase):
         roominfoWnd.SendKeys('{Esc}')
         return members
 
-    def GetAllFriends(self):
+    def GetAllFriends(self, keywords=None):
         """获取所有好友列表
         注：
             1. 该方法运行时间取决于好友数量，约每秒6~8个好友的速度
             2. 该方法未经过大量测试，可能存在未知问题，如有问题请微信群内反馈
         
+        Args:
+            keywords (str, optional): 搜索关键词，只返回包含关键词的好友列表
         Returns:
             list: 所有好友列表
         """
@@ -462,6 +464,8 @@ class WeChat(WeChatBase):
         self.SwitchToContact()
         self.SessionBox.ListControl(Name="联系人").ButtonControl(Name="通讯录管理").Click(simulateMove=False)
         contactwnd = ContactWnd()
+        if keywords:
+            contactwnd.Search(keywords)
         friends = contactwnd.GetAllFriends()
         contactwnd.Close()
         self.SwitchToChat()
