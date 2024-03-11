@@ -14,7 +14,10 @@ import datetime
 import time
 import os
 import re
-
+try:
+    from typing import Literal
+except:
+    from typing_extensions import Literal
 
 class WeChat(WeChatBase):
     def __init__(self, language='cn') -> None:
@@ -180,11 +183,12 @@ class WeChat(WeChatBase):
             return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
         return SessionList
     
-    def ChatWith(self, who):
+    def ChatWith(self, who, notfound: Literal['raise', 'ignore']='ignore'):
         '''打开某个聊天框
         
         Args:
             who ( str ): 要打开的聊天框好友名;  * 最好完整匹配，不完全匹配只会选取搜索框第一个
+            notfound ( str, optional ): 未找到时的处理方式，可选：raise-抛出异常  ignore-忽略，默认ignore
             
         Returns:
             chatname ( str ): 匹配值第一个的完整名字
@@ -205,7 +209,10 @@ class WeChat(WeChatBase):
         if firstresult.Name == f'搜索 {who}':
             if len(self.SessionBox.GetChildren()[1].GetChildren()) > 1:
                 self.B_Search.SendKeys('{Esc}')
-            raise TargetNotFoundError(f'未查询到目标：{who}')
+            if notfound == 'raise':
+                raise TargetNotFoundError(f'未查询到目标：{who}')
+            elif notfound == 'ignore':
+                return None
         chatname = firstresult.Name
         firstresult.Click(simulateMove=False)
         return chatname
