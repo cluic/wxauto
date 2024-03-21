@@ -1,6 +1,6 @@
 """
 Author: Cluic
-Update: 2024-03-10
+Update: 2024-02-06
 Version: 3.9.8.15
 """
 
@@ -14,10 +14,7 @@ import datetime
 import time
 import os
 import re
-try:
-    from typing import Literal
-except:
-    from typing_extensions import Literal
+
 
 class WeChat(WeChatBase):
     def __init__(self, language='cn') -> None:
@@ -183,12 +180,11 @@ class WeChat(WeChatBase):
             return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
         return SessionList
     
-    def ChatWith(self, who, notfound: Literal['raise', 'ignore']='ignore'):
+    def ChatWith(self, who):
         '''打开某个聊天框
         
         Args:
             who ( str ): 要打开的聊天框好友名;  * 最好完整匹配，不完全匹配只会选取搜索框第一个
-            notfound ( str, optional ): 未找到时的处理方式，可选：raise-抛出异常  ignore-忽略，默认ignore
             
         Returns:
             chatname ( str ): 匹配值第一个的完整名字
@@ -209,10 +205,7 @@ class WeChat(WeChatBase):
         if firstresult.Name == f'搜索 {who}':
             if len(self.SessionBox.GetChildren()[1].GetChildren()) > 1:
                 self.B_Search.SendKeys('{Esc}')
-            if notfound == 'raise':
-                raise TargetNotFoundError(f'未查询到目标：{who}')
-            elif notfound == 'ignore':
-                return None
+            raise TargetNotFoundError(f'未查询到目标：{who}')
         chatname = firstresult.Name
         firstresult.Click(simulateMove=False)
         return chatname
@@ -280,7 +273,7 @@ class WeChat(WeChatBase):
                 Warnings.lightred(f'未找到文件：{filepath}，无法成功发送', stacklevel=2)
                 return False
             else:
-                filelist.append(os.path.realpath(filepath))
+                filelist.append(filepath)
         elif isinstance(filepath, (list, tuple, set)):
             for i in filepath:
                 if os.path.exists(i):
@@ -410,8 +403,7 @@ class WeChat(WeChatBase):
             chat = self.listen[who]
             chat._show()
             msg = chat.GetNewMessage(savepic=chat.savepic)
-            # if [i for i in msg if i[0] != 'Self']:
-            if msg:
+            if [i for i in msg if i[0] != 'Self']:
                 msgs[chat] = msg
         return msgs
 
@@ -424,6 +416,20 @@ class WeChat(WeChatBase):
         """切换到聊天页面"""
         self._show()
         self.A_ChatIcon.Click(simulateMove=False)
+    
+    def DownloadFiles(self, who, amount):
+        """切换到聊天文件页面"""
+        self._show()
+        self.A_FilesIcon.Click(simulateMove=False)
+        files = WeChatFiles()
+        files.ChatWithFile(who)
+        files.DownloadFiles(who, amount)
+        files.Close()
+    
+    def SwitchToFavor(self):
+        """切换到收藏页面"""
+        self._show()
+        self.A_FavoritesIcon.Click(simulateMove=False)
 
     def GetGroupMembers(self):
         """获取当前聊天群成员
@@ -455,26 +461,125 @@ class WeChat(WeChatBase):
             members = members[:-1]
         roominfoWnd.SendKeys('{Esc}')
         return members
+    
+class WeChatFiles:
+    def __init__(self, language='cn') -> None:
+        self.language = language
+        self.api = uia.WindowControl(ClassName='FileListMgrWnd', searchDepth=1)
+        MainControl3 = [i for i in self.api.GetChildren() if not i.ClassName][0]
+        self.FileBox ,self.Search ,self.SessionBox = MainControl3.GetChildren()
 
-    def GetAllFriends(self, keywords=None):
-        """获取所有好友列表
-        注：
-            1. 该方法运行时间取决于好友数量，约每秒6~8个好友的速度
-            2. 该方法未经过大量测试，可能存在未知问题，如有问题请微信群内反馈
-        
+        self.allfiles = self.SessionBox.ButtonControl(Name=self._lang('全部'))
+        self.recentfiles = self.SessionBox.ButtonControl(Name=self._lang('最近使用'))
+        self.whofiles = self.SessionBox.ButtonControl(Name=self._lang('发送者'))
+        self.chatfiles = self.SessionBox.ButtonControl(Name=self._lang('聊天'))
+        self.typefiles = self.SessionBox.ButtonControl(Name=self._lang('类型'))
+
+
+    def GetSessionName(self, SessionItem):
+        """获取聊天对象的名字
+
         Args:
-            keywords (str, optional): 搜索关键词，只返回包含关键词的好友列表
-            
+            SessionItem (uiautomation.ListItemControl): 聊天对象控件
+
         Returns:
-            list: 所有好友列表
+            sessionname (str): 聊天对象名
         """
+        return SessionItem.Name
+
+    def GetSessionList(self, reset=False):
+        """获取当前聊天列表中的所有聊天对象的名字
+
+        Args:
+            reset (bool): 是否重置SessionItemList
+
+        Returns:
+            session_names (list): 对象名称列表
+        """
+        self.SessionItem = self.SessionBox.ListControl(Name='',searchDepth=3).GetChildren()
+        if reset:
+            self.SessionItemList = []
+        session_names = []
+        for i in range(len(self.SessionItem)):
+            session_names.append(self.GetSessionName(self.SessionItem[i]))
+
+        return session_names
+
+    def __repr__(self) -> str:
+        return f"<wxauto WeChat Image at {hex(id(self))}>"
+
+    def _lang(self, text):
+        return FILE_LANGUAGE[text][self.language]
+
+    def _show(self):
+        HWND = FindWindow(classname='ImagePreviewWnd')
+        win32gui.ShowWindow(HWND, 1)
+        self.api.SwitchToThisWindow()
+
+    def ChatWithFile(self, who):
+        '''打开某个聊天会话
+
+        Args:
+            who ( str ): 要打开的聊天框好友名。
+
+        Returns:
+            chatname ( str ): 打开的聊天框的名字。
+        '''
         self._show()
-        self.SwitchToContact()
-        self.SessionBox.ListControl(Name="联系人").ButtonControl(Name="通讯录管理").Click(simulateMove=False)
-        contactwnd = ContactWnd()
-        if keywords:
-            contactwnd.Search(keywords)
-        friends = contactwnd.GetAllFriends()
-        contactwnd.Close()
-        self.SwitchToChat()
-        return friends
+        self.chatfiles.Click(simulateMove=False)
+        sessiondict = self.GetSessionList(True)
+
+        if who in sessiondict:
+            # 直接点击已存在的聊天框
+            self.SessionBox.ListItemControl(Name=who).Click(simulateMove=False)
+            return who
+        else:
+            # 如果聊天框不在列表中，则抛出异常
+            raise TargetNotFoundError(f'未查询到目标：{who}')
+
+    def DownloadFiles(self, who, amount, deadline=None, size=None):
+        '''开始下载文件
+
+        Args:
+            who ( str )：聊天名称
+            amount ( num )：下载的文件数量限制。
+            deadline ( str )：截止日期限制。
+            size ( str )：文件大小限制。
+
+        Returns:
+            result ( bool )：下载是否成功
+
+        '''
+        self._show()
+        itemlist = self.GetSessionList()
+        if who in itemlist:
+            self.item = self.SessionBox.ListItemControl(Name=who)
+            self.item.Click(simulateMove=False)
+        else:
+            print(f'未查询到目标：{who}')
+        itemfileslist = []
+
+        item = self.SessionBox.ListControl(Name='', searchDepth=7).GetParentControl()
+        item = item.GetNextSiblingControl()
+        item = item.ListControl(Name='', searchDepth=5).GetChildren()
+        del item[0]
+
+
+
+        for i in range(amount):
+            try:
+                
+                itemfileslist.append(item[i].Name)
+                self.itemfiles = item[i]
+                self.itemfiles.Click()
+                time.sleep(0.5)
+            except:
+                pass
+
+
+
+
+
+    def Close(self):
+        self._show()
+        self.api.SendKeys('{Esc}')
