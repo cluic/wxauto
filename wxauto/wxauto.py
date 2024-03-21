@@ -14,7 +14,10 @@ import datetime
 import time
 import os
 import re
-
+try:
+    from typing import Literal
+except:
+    from typing_extensions import Literal
 
 class WeChat(WeChatBase):
     def __init__(self, language='cn') -> None:
@@ -180,11 +183,12 @@ class WeChat(WeChatBase):
             return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
         return SessionList
     
-    def ChatWith(self, who):
+    def ChatWith(self, who, notfound: Literal['raise', 'ignore']='ignore'):
         '''打开某个聊天框
         
         Args:
             who ( str ): 要打开的聊天框好友名;  * 最好完整匹配，不完全匹配只会选取搜索框第一个
+            notfound ( str, optional ): 未找到时的处理方式，可选：raise-抛出异常  ignore-忽略，默认ignore
             
         Returns:
             chatname ( str ): 匹配值第一个的完整名字
@@ -205,7 +209,10 @@ class WeChat(WeChatBase):
         if firstresult.Name == f'搜索 {who}':
             if len(self.SessionBox.GetChildren()[1].GetChildren()) > 1:
                 self.B_Search.SendKeys('{Esc}')
-            raise TargetNotFoundError(f'未查询到目标：{who}')
+            if notfound == 'raise':
+                raise TargetNotFoundError(f'未查询到目标：{who}')
+            elif notfound == 'ignore':
+                return None
         chatname = firstresult.Name
         firstresult.Click(simulateMove=False)
         return chatname
@@ -273,7 +280,7 @@ class WeChat(WeChatBase):
                 Warnings.lightred(f'未找到文件：{filepath}，无法成功发送', stacklevel=2)
                 return False
             else:
-                filelist.append(filepath)
+                filelist.append(os.path.realpath(filepath))
         elif isinstance(filepath, (list, tuple, set)):
             for i in filepath:
                 if os.path.exists(i):
@@ -403,7 +410,8 @@ class WeChat(WeChatBase):
             chat = self.listen[who]
             chat._show()
             msg = chat.GetNewMessage(savepic=chat.savepic)
-            if [i for i in msg if i[0] != 'Self']:
+            # if [i for i in msg if i[0] != 'Self']:
+            if msg:
                 msgs[chat] = msg
         return msgs
 
@@ -416,7 +424,7 @@ class WeChat(WeChatBase):
         """切换到聊天页面"""
         self._show()
         self.A_ChatIcon.Click(simulateMove=False)
-    
+
     def DownloadFiles(self, who, amount):
         """切换到聊天文件页面"""
         self._show()
@@ -425,11 +433,6 @@ class WeChat(WeChatBase):
         files.ChatWithFile(who)
         files.DownloadFiles(who, amount)
         files.Close()
-    
-    def SwitchToFavor(self):
-        """切换到收藏页面"""
-        self._show()
-        self.A_FavoritesIcon.Click(simulateMove=False)
 
     def GetGroupMembers(self):
         """获取当前聊天群成员
@@ -461,6 +464,29 @@ class WeChat(WeChatBase):
             members = members[:-1]
         roominfoWnd.SendKeys('{Esc}')
         return members
+
+    def GetAllFriends(self, keywords=None):
+        """获取所有好友列表
+        注：
+            1. 该方法运行时间取决于好友数量，约每秒6~8个好友的速度
+            2. 该方法未经过大量测试，可能存在未知问题，如有问题请微信群内反馈
+        
+        Args:
+            keywords (str, optional): 搜索关键词，只返回包含关键词的好友列表
+            
+        Returns:
+            list: 所有好友列表
+        """
+        self._show()
+        self.SwitchToContact()
+        self.SessionBox.ListControl(Name="联系人").ButtonControl(Name="通讯录管理").Click(simulateMove=False)
+        contactwnd = ContactWnd()
+        if keywords:
+            contactwnd.Search(keywords)
+        friends = contactwnd.GetAllFriends()
+        contactwnd.Close()
+        self.SwitchToChat()
+        return friends
     
 class WeChatFiles:
     def __init__(self, language='cn') -> None:
@@ -568,7 +594,7 @@ class WeChatFiles:
 
         for i in range(amount):
             try:
-                
+
                 itemfileslist.append(item[i].Name)
                 self.itemfiles = item[i]
                 self.itemfiles.Click()
