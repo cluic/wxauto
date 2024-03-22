@@ -46,14 +46,14 @@ class WeChatBase:
                 winrect = MsgItem.BoundingRectangle
                 mid = (winrect.left + winrect.right)/2
                 if User.BoundingRectangle.left < mid:
-                    name = User.Name
+                    name = (User.Name, MsgItem.TextControl().Name)
                 else:
                     name = 'Self'
                 Msg = [name, MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
             except:
                 Msg = ['SYS', MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
         uia.SetGlobalSearchTimeout(10.0)
-        return Msg
+        return ParseMessage(Msg)
     
     def _getmsgs(self, msgitems, savepic=False):
         msgs = []
@@ -87,7 +87,6 @@ class WeChatBase:
             savepath = imgobj.Save()
             paths.append(savepath)
             while True:
-        
                 if imgobj.Next(warning=False):
                     savepath = imgobj.Save()
                     paths.append(savepath)
@@ -530,3 +529,95 @@ class ContactElement:
         self.element.SendKeys('{Ctrl}a')
         self.element.SendKeys(remark)
         self.element.SendKeys('{Enter}')
+
+
+class Message:
+    type = 'message'
+
+    def __getitem__(self, index):
+        return self.info[index]
+    
+    def __str__(self):
+        return self.content
+    
+    def __repr__(self):
+        return str(self.info)
+    
+
+class SysMessage(Message):
+    type = 'sys'
+    
+    def __init__(self, info):
+        self.info = info
+        self.sender = info[0]
+        self.content = info[1]
+        self.id = info[-1]
+    
+    # def __repr__(self):
+    #     return f'<wxauto SysMessage at {hex(id(self))}>'
+    
+
+class TimeMessage(Message):
+    type = 'time'
+    
+    def __init__(self, info):
+        self.info = info
+        self.time = ParseWeChatTime(info[1])
+        self.sender = info[0]
+        self.content = info[1]
+        self.id = info[-1]
+    
+    # def __repr__(self):
+    #     return f'<wxauto TimeMessage at {hex(id(self))}>'
+    
+
+class RecallMessage(Message):
+    type = 'recall'
+    
+    def __init__(self, info):
+        self.info = info
+        self.sender = info[0]
+        self.content = info[1]
+        self.id = info[-1]
+    
+    # def __repr__(self):
+    #     return f'<wxauto RecallMessage at {hex(id(self))}>'
+    
+
+class SelfMessage(Message):
+    type = 'self'
+    
+    def __init__(self, info):
+        self.info = info
+        self.sender = info[0]
+        self.content = info[1]
+        self.id = info[-1]
+    
+    # def __repr__(self):
+    #     return f'<wxauto SelfMessage at {hex(id(self))}>'
+    
+
+class FriendMessage(Message):
+    type = 'friend'
+    
+    def __init__(self, info):
+        self.info = info
+        self.sender = info[0][0]
+        self.sender_remark = info[0][1]
+        self.content = info[1]
+        self.id = info[-1]
+        self.info[0] = info[0][0]
+    
+    # def __repr__(self):
+    #     return f'<wxauto FriendMessage at {hex(id(self))}>'
+
+
+message_types = {
+    'SYS': SysMessage,
+    'Time': TimeMessage,
+    'Recall': RecallMessage,
+    'Self': SelfMessage
+}
+
+def ParseMessage(data):
+    return message_types.get(data[0], FriendMessage)(data)
