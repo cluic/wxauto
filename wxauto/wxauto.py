@@ -1,6 +1,6 @@
 """
 Author: Cluic
-Update: 2024-03-10
+Update: 2024-03-21
 Version: 3.9.8.15
 """
 
@@ -425,6 +425,15 @@ class WeChat(WeChatBase):
         self._show()
         self.A_ChatIcon.Click(simulateMove=False)
 
+    def DownloadFiles(self, who, amount):
+        """切换到聊天文件页面"""
+        self._show()
+        self.A_FilesIcon.Click(simulateMove=False)
+        files = WeChatFiles()
+        files.ChatWithFile(who)
+        files.DownloadFiles(who, amount)
+        files.Close()
+
     def GetGroupMembers(self):
         """获取当前聊天群成员
 
@@ -478,3 +487,125 @@ class WeChat(WeChatBase):
         contactwnd.Close()
         self.SwitchToChat()
         return friends
+    
+class WeChatFiles:
+    def __init__(self, language='cn') -> None:
+        self.language = language
+        self.api = uia.WindowControl(ClassName='FileListMgrWnd', searchDepth=1)
+        MainControl3 = [i for i in self.api.GetChildren() if not i.ClassName][0]
+        self.FileBox ,self.Search ,self.SessionBox = MainControl3.GetChildren()
+
+        self.allfiles = self.SessionBox.ButtonControl(Name=self._lang('全部'))
+        self.recentfiles = self.SessionBox.ButtonControl(Name=self._lang('最近使用'))
+        self.whofiles = self.SessionBox.ButtonControl(Name=self._lang('发送者'))
+        self.chatfiles = self.SessionBox.ButtonControl(Name=self._lang('聊天'))
+        self.typefiles = self.SessionBox.ButtonControl(Name=self._lang('类型'))
+
+
+    def GetSessionName(self, SessionItem):
+        """获取聊天对象的名字
+
+        Args:
+            SessionItem (uiautomation.ListItemControl): 聊天对象控件
+
+        Returns:
+            sessionname (str): 聊天对象名
+        """
+        return SessionItem.Name
+
+    def GetSessionList(self, reset=False):
+        """获取当前聊天列表中的所有聊天对象的名字
+
+        Args:
+            reset (bool): 是否重置SessionItemList
+
+        Returns:
+            session_names (list): 对象名称列表
+        """
+        self.SessionItem = self.SessionBox.ListControl(Name='',searchDepth=3).GetChildren()
+        if reset:
+            self.SessionItemList = []
+        session_names = []
+        for i in range(len(self.SessionItem)):
+            session_names.append(self.GetSessionName(self.SessionItem[i]))
+
+        return session_names
+
+    def __repr__(self) -> str:
+        return f"<wxauto WeChat Image at {hex(id(self))}>"
+
+    def _lang(self, text):
+        return FILE_LANGUAGE[text][self.language]
+
+    def _show(self):
+        HWND = FindWindow(classname='ImagePreviewWnd')
+        win32gui.ShowWindow(HWND, 1)
+        self.api.SwitchToThisWindow()
+
+    def ChatWithFile(self, who):
+        '''打开某个聊天会话
+
+        Args:
+            who ( str ): 要打开的聊天框好友名。
+
+        Returns:
+            chatname ( str ): 打开的聊天框的名字。
+        '''
+        self._show()
+        self.chatfiles.Click(simulateMove=False)
+        sessiondict = self.GetSessionList(True)
+
+        if who in sessiondict:
+            # 直接点击已存在的聊天框
+            self.SessionBox.ListItemControl(Name=who).Click(simulateMove=False)
+            return who
+        else:
+            # 如果聊天框不在列表中，则抛出异常
+            raise TargetNotFoundError(f'未查询到目标：{who}')
+
+    def DownloadFiles(self, who, amount, deadline=None, size=None):
+        '''开始下载文件
+
+        Args:
+            who ( str )：聊天名称
+            amount ( num )：下载的文件数量限制。
+            deadline ( str )：截止日期限制。
+            size ( str )：文件大小限制。
+
+        Returns:
+            result ( bool )：下载是否成功
+
+        '''
+        self._show()
+        itemlist = self.GetSessionList()
+        if who in itemlist:
+            self.item = self.SessionBox.ListItemControl(Name=who)
+            self.item.Click(simulateMove=False)
+        else:
+            print(f'未查询到目标：{who}')
+        itemfileslist = []
+
+        item = self.SessionBox.ListControl(Name='', searchDepth=7).GetParentControl()
+        item = item.GetNextSiblingControl()
+        item = item.ListControl(Name='', searchDepth=5).GetChildren()
+        del item[0]
+
+
+
+        for i in range(amount):
+            try:
+
+                itemfileslist.append(item[i].Name)
+                self.itemfiles = item[i]
+                self.itemfiles.Click()
+                time.sleep(0.5)
+            except:
+                pass
+
+
+
+
+
+    def Close(self):
+        self._show()
+        self.api.SendKeys('{Esc}')
