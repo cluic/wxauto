@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from PIL import ImageGrab
 import win32clipboard
 import win32process
@@ -17,6 +18,8 @@ import psutil
 import shutil
 import time
 import os
+import re
+
 
 def set_cursor_pos(x, y):
     win32api.SetCursorPos((x, y))
@@ -227,3 +230,39 @@ def ReadClipboardData():
             raise ValueError
         Dict[str(i)] = filenames
     return Dict
+
+def ParseWeChatTime(time_str):
+    """
+    时间格式转换函数
+
+    Args:
+        time_str: 输入的时间字符串
+
+    Returns:
+        转换后的时间字符串
+    """
+
+    match = re.match(r'^(\d{1,2}):(\d{1,2})$', time_str)
+    if match:
+        hour, minute = match.groups()
+        return datetime.now().strftime('%Y-%m-%d') + f' {hour}:{minute}'
+
+    match = re.match(r'^昨天 (\d{1,2}):(\d{1,2})$', time_str)
+    if match:
+        hour, minute = match.groups()
+        yesterday = datetime.now() - timedelta(days=1)
+        return yesterday.strftime('%Y-%m-%d') + f' {hour}:{minute}'
+
+    match = re.match(r'^星期([一二三四五六日]) (\d{1,2}):(\d{1,2})$', time_str)
+    if match:
+        weekday, hour, minute = match.groups()
+        weekday_num = ['一', '二', '三', '四', '五', '六', '日'].index(weekday)
+        today_weekday = datetime.now().weekday()
+        delta_days = (today_weekday - weekday_num) % 7
+        target_day = datetime.now() - timedelta(days=delta_days)
+        return target_day.strftime('%Y-%m-%d') + f' {hour}:{minute}'
+
+    match = re.match(r'^(\d{4})年(\d{1,2})月(\d{1,2})日 (\d{1,2}):(\d{1,2})$', time_str)
+    if match:
+        year, month, day, hour, minute = match.groups()
+        return datetime(*[int(i) for i in [year, month, day, hour, minute]]).strftime('%Y-%m-%d') + f' {hour}:{minute}'
