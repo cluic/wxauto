@@ -501,7 +501,6 @@ class WeChatFiles:
         self.chatfiles = self.SessionBox.ButtonControl(Name=self._lang('聊天'))
         self.typefiles = self.SessionBox.ButtonControl(Name=self._lang('类型'))
 
-
     def GetSessionName(self, SessionItem):
         """获取聊天对象的名字
 
@@ -590,8 +589,6 @@ class WeChatFiles:
         item = item.ListControl(Name='', searchDepth=5).GetChildren()
         del item[0]
 
-
-
         for i in range(amount):
             try:
 
@@ -601,10 +598,6 @@ class WeChatFiles:
                 time.sleep(0.5)
             except:
                 pass
-
-
-
-
 
     def Close(self):
         self._show()
