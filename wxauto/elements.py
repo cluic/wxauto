@@ -96,7 +96,8 @@ class WeChatBase:
             idx = 0
             for msg in msgs:
                 if msg[1] == f"[{self._lang('图片')}]":
-                    msg[1] = paths[idx]
+                    msg.info[1] = paths[idx]
+                    msg.content = paths[idx]
                     idx += 1
         return msgs
     
