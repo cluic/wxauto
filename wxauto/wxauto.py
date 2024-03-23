@@ -425,14 +425,19 @@ class WeChat(WeChatBase):
         self._show()
         self.A_ChatIcon.Click(simulateMove=False)
 
-    def DownloadFiles(self, who, amount):
-        """切换到聊天文件页面"""
-        self._show()
-        self.A_FilesIcon.Click(simulateMove=False)
-        files = WeChatFiles()
-        files.ChatWithFile(who)
-        files.DownloadFiles(who, amount)
-        files.Close()
+    # def DownloadFiles(self, who, amount=1):
+    #     """切换到聊天文件页面
+        
+    #     Args:
+    #         who (str): 要下载文件的聊天对象名
+    #         amount (int): 要下载的文件数量
+    #     """
+    #     self._show()
+    #     self.A_FilesIcon.Click(simulateMove=False)
+    #     files = WeChatFiles()
+    #     files.ChatWithFile(who)
+    #     files.DownloadFiles(who, amount)
+    #     files.Close()
 
     def GetGroupMembers(self):
         """获取当前聊天群成员
