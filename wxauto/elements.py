@@ -46,7 +46,10 @@ class WeChatBase:
                 winrect = MsgItem.BoundingRectangle
                 mid = (winrect.left + winrect.right)/2
                 if User.BoundingRectangle.left < mid:
-                    name = (User.Name, MsgItem.TextControl().Name)
+                    if MsgItem.TextControl(foundIndex=2).Exists(0.1):
+                        name = (User.Name, MsgItem.TextControl().Name)
+                    else:
+                        name = (User.Name, User.Name)
                 else:
                     name = 'Self'
                 Msg = [name, MsgItemName, ''.join([str(i) for i in MsgItem.GetRuntimeId()])]
