@@ -545,7 +545,7 @@ class Message:
         return self.content
     
     def __repr__(self):
-        return str(self.info)
+        return str(self.info[:2])
     
 
 class SysMessage(Message):
