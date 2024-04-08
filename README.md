@@ -6,7 +6,8 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 
 **相关版本安装包下载**：
 [OneDrive](https://1drv.ms/f/s!AqQw88ELOBiTgcAN_bBQlBaz60PTBg?e=oGoeju) |
-[百度云](https://pan.baidu.com/s/1FvSw0Fk54GGvmQq8xSrNjA?pwd=vsmj)
+[百度云](https://pan.baidu.com/s/1FvSw0Fk54GGvmQq8xSrNjA?pwd=vsmj) |
+[Github](https://github.com/tom-snow/wechat-windows-versions/releases)
 
 **文档**：
 [使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md) |
