@@ -21,12 +21,10 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 
 [![Star History Chart](https://api.star-history.com/svg?repos=cluic/wxauto&type=Date)](https://star-history.com/#cluic/wxauto)
 
-## 获取wxauto（请勿直接pip install）
+## 获取wxauto
 cmd窗口：
 ```shell
-git clone https://github.com/cluic/wxauto.git
-cd wxauto
-pip install -r requirements.txt
+pip install wxauto
 ```
 python窗口：
 ```python
