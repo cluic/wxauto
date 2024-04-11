@@ -112,11 +112,15 @@ class WeChat(WeChatBase):
     def GetNextNewMessage(self, savepic=False):
         """获取下一个新消息"""
         msgs_ = self.GetAllMessage()
+        if self.lastmsgid is None:
+            self.lastmsgid = msgs_[-1][-1]
+            return 
         if self.lastmsgid is not None and self.lastmsgid in [i[-1] for i in msgs_[:-1]]:
             print('获取当前窗口新消息')
             idx = [i[-1] for i in msgs_].index(self.lastmsgid)
             MsgItems = self.C_MsgList.GetChildren()[idx+1:]
             msgs = self._getmsgs(MsgItems, savepic)
+            self.lastmsgid = msgs[-1][-1]
             return {self.CurrentChat(): msgs}
 
         elif self.CheckNewMessage():
