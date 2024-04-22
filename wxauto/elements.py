@@ -126,23 +126,54 @@ class ChatWnd(WeChatBase):
         win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
         self.UiaAPI.SwitchToThisWindow()
 
-    def SendMsg(self, msg):
-        """发送文本消息
-
+    def AtAll(self, msg=None):
+        """@所有人
+        
         Args:
-            msg (str): 要发送的文本消息
+            msg (str, optional): 要发送的文本消息
         """
         self._show()
         if not self.editbox.HasKeyboardFocus:
             self.editbox.Click(simulateMove=False)
 
+        self.editbox.SendKeys('@')
+        atwnd = self.UiaAPI.PaneControl(ClassName='ChatContactMenu')
+        if atwnd.Exists(maxSearchSeconds=0.1):
+            atwnd.ListItemControl(Name='所有人').Click(simulateMove=False)
+            if msg:
+                self.SendMsg(msg)
+            else:
+                self.editbox.SendKeys('{Enter}')
+
+    def SendMsg(self, msg, at=None):
+        """发送文本消息
+
+        Args:
+            msg (str): 要发送的文本消息
+            at (str|list, optional): 要@的人，可以是一个人或多个人，格式为str或list，例如："张三"或["张三", "李四"]
+        """
+        self._show()
+        if not self.editbox.HasKeyboardFocus:
+            self.editbox.Click(simulateMove=False)
+
+        if at:
+            if isinstance(at, str):
+                at = [at]
+            for i in at:
+                self.editbox.SendKeys('@'+i)
+                atwnd = self.UiaAPI.PaneControl(ClassName='ChatContactMenu')
+                if atwnd.Exists(maxSearchSeconds=0.1):
+                    atwnd.SendKeys('{ENTER}')
+
         t0 = time.time()
         while True:
             if time.time() - t0 > 10:
                 raise TimeoutError(f'发送消息超时 --> {self.who} - {msg}')
+            editbox.SetFocus()
+            time.sleep(0.1)
             SetClipboardText(msg)
             self.editbox.SendKeys('{Ctrl}v')
-            if self.editbox.GetValuePattern().Value:
+            if self.editbox.GetValuePattern().Value.strip('￼'):
                 break
         self.editbox.SendKeys('{Enter}')
 

@@ -1,7 +1,7 @@
 """
 Author: Cluic
-Update: 2024-03-21
-Version: 3.9.8.15
+Update: 2024-04-21
+Version: 3.9.8.15.3
 """
 
 import uiautomation as uia
@@ -221,19 +221,55 @@ class WeChat(WeChatBase):
         firstresult.Click(simulateMove=False)
         return chatname
     
-    def SendMsg(self, msg, who=None, clear=True):
+    def AtAll(self, msg=None, who=None):
+        """@所有人
+        
+        Args:
+            who (str, optional): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
+            msg (str, optional): 要发送的文本消息
+        """
+        if FindWindow(name=who, classname='ChatWnd'):
+            chat = ChatWnd(who, self.language)
+            chat.AtAll(msg)
+            return None
+        
+        self._show()
+        if who:
+            try:
+                editbox = self.ChatBox.EditControl(searchDepth=10)
+                if who in self.CurrentChat() and who in editbox.Name:
+                    pass
+                else:
+                    self.ChatWith(who)
+                    editbox = self.ChatBox.EditControl(Name=who, searchDepth=10)
+            except:
+                self.ChatWith(who)
+                editbox = self.ChatBox.EditControl(Name=who, searchDepth=10)
+        else:
+            editbox = self.ChatBox.EditControl(searchDepth=10)
+        editbox.SendKeys('@')
+        atwnd = self.UiaAPI.PaneControl(ClassName='ChatContactMenu')
+        if atwnd.Exists(maxSearchSeconds=0.1):
+            atwnd.ListItemControl(Name='所有人').Click(simulateMove=False)
+            if msg:
+                self.SendMsg(msg, clear=False)
+            else:
+                editbox.SendKeys('{Enter}')
+
+    def SendMsg(self, msg, who=None, clear=True, at=None):
         """发送文本消息
 
         Args:
             msg (str): 要发送的文本消息
             who (str): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
             clear (bool, optional): 是否清除原本的内容，
+            at (str|list, optional): 要@的人，可以是一个人或多个人，格式为str或list，例如："张三"或["张三", "李四"]
         """
-        if who in self.listen:
-            chat = self.listen[who]
-            chat.SendMsg(msg)
+        if FindWindow(name=who, classname='ChatWnd'):
+            chat = ChatWnd(who, self.language)
+            chat.SendMsg(msg, at=at)
             return None
-        if not msg:
+        if not msg and not at:
             return None
         if who:
             try:
@@ -254,14 +290,26 @@ class WeChat(WeChatBase):
         if not editbox.HasKeyboardFocus:
             editbox.Click(simulateMove=False)
         
-        t0 = time.time()
-        while True:
-            if time.time() - t0 > 10:
-                raise TimeoutError(f'发送消息超时 --> {editbox.Name} - {msg}')
-            SetClipboardText(msg)
-            editbox.SendKeys('{Ctrl}v')
-            if editbox.GetValuePattern().Value:
-                break
+        if at:
+            if isinstance(at, str):
+                at = [at]
+            for i in at:
+                editbox.SendKeys('@'+i)
+                atwnd = self.UiaAPI.PaneControl(ClassName='ChatContactMenu')
+                if atwnd.Exists(maxSearchSeconds=0.1):
+                    atwnd.SendKeys('{ENTER}')
+
+        if msg:
+            t0 = time.time()
+            while True:
+                if time.time() - t0 > 10:
+                    raise TimeoutError(f'发送消息超时 --> {editbox.Name} - {msg}')
+                editbox.SetFocus()
+                time.sleep(0.1)
+                SetClipboardText(msg)
+                editbox.SendKeys('{Ctrl}v')
+                if editbox.GetValuePattern().Value.strip('￼'):
+                    break
         editbox.SendKeys('{Enter}')
         
     def SendFiles(self, filepath, who=None):
@@ -274,8 +322,8 @@ class WeChat(WeChatBase):
         Returns:
             bool: 是否成功发送文件
         """
-        if who in self.listen:
-            chat = self.listen[who]
+        if FindWindow(name=who, classname='ChatWnd'):
+            chat = ChatWnd(who, self.language)
             chat.SendFiles(filepath)
             return None
         filelist = []
@@ -412,7 +460,7 @@ class WeChat(WeChatBase):
         msgs = {}
         for who in self.listen:
             chat = self.listen[who]
-            chat._show()
+            # chat._show()
             msg = chat.GetNewMessage(savepic=chat.savepic)
             # if [i for i in msg if i[0] != 'Self']:
             if msg:
@@ -496,6 +544,17 @@ class WeChat(WeChatBase):
         contactwnd.Close()
         self.SwitchToChat()
         return friends
+    
+    def GetAllListenChat(self):
+        """获取所有监听对象"""
+        return self.listen
+    
+    def RemoveListenChat(self, who):
+        """移除监听对象"""
+        if who in self.listen:
+            del self.listen[who]
+        else:
+            Warnings.lightred(f'未找到监听对象：{who}', stacklevel=2)
     
 class WeChatFiles:
     def __init__(self, language='cn') -> None:
