@@ -169,7 +169,7 @@ class ChatWnd(WeChatBase):
         while True:
             if time.time() - t0 > 10:
                 raise TimeoutError(f'发送消息超时 --> {self.who} - {msg}')
-            editbox.SetFocus()
+            self.editbox.SetFocus()
             time.sleep(0.1)
             SetClipboardText(msg)
             self.editbox.SendKeys('{Ctrl}v')
