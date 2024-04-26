@@ -1,102 +1,29 @@
 from openai import OpenAI
 from wxauto import *
+from wxauto import gpt_robot
 import time
 
-def receive_message(w,type,robot_array):
-	msgs = w.GetListenMessage()
-	for chat in msgs:
-		msg = msgs.get(chat)   # 获取消息内容
-		for i in range(1,len(msg)):
-			print(len(msg))
-			print(type)
-			print(msg[i][0])
-			print(msg[i][1])
-			if msg[i][0]=='SYS' or msg[i][0]=='Self':
-				continue
-			elif type==1 and '@lzc' in msg[i][1] :
-				num=0
-				answer=robot_array[num].kobe_talk(change_mes(msg[i][1]))
-			elif type==0 :
-				num=get_number(msg[i][0])
-				print(num)
-				answer=robot_array[num].kobe_talk(msg[i][1])
-			else:
-				continue
-			chat.SendMsg(answer)
+wx = WeChat()
 
-def change_mes(message):
-	message_1 = message.replace("@lzc", "")
-	return message_1
-
-def get_number(name):
-	global listen_list_human
-	for i in range(0,len(listen_list_human)):
-		if name==listen_list_human[i]:
-			return i
-
-class Robot:
-	def __init__(self,name,type,role,client,pretrained):
-		self.name = name
-		self.type = type
-		self.role = role
-		self.client = client
-		self.mes_history = self.prepare(role,pretrained)
-
-	def _read_(self, role):
-		with open(role, 'r', encoding='utf-8') as file:
-			return file.readlines()
-
-	def prepare(self, role_path,pretrained_path):
-		role = self._read_(role_path)
-		pretrain = self._read_(pretrained_path)
-		pre = [{"role": "system", "content":role[0]}]
-		for i in range(0,len(pretrain)):
-			if(i % 2 == 1):
-				pre.append( {"role": "user", "content": pretrain[i]})
-			else:
-				pre.append( {"role": "assistant", "content": pretrain[i]})
-		return pre
-
-				
-	def kobe_talk(self,question):
-		self.mes_history.append({"role": "user", "content": question})	
-		completion = self.client.chat.completions.create(
-		model="gpt-4-turbo-preview",
-		messages=self.mes_history
-		)
-		answer=completion.choices[0].message.content
-		self.mes_history.append( {"role": "assistant", "content": answer})
-		return answer
-
-
-#wx = WeChat()
-wx2 = WeChat()
-
-listen_list_human = [
-    'lzcc'
-]
+#创建一个人/群聊列表,人和群需要分开
 listen_list_group = [
     '健身群'
 ]
-
-role='role/kobe.txt'
-pretrained='pretrained/kobe_1.txt'
-
+robot_group_array=[]#机器人列表
+role='role/kobe.txt'#角色文件路径
+pretrained='pretrained/kobe_1.txt'#预先对话的文件路径
+condition='@lzc'#触发回复的条件为信息@lzc
+condition_type=1#需要把该信息过滤后传输给gpt,0表示无需过滤
 
 client = OpenAI()
-robot_human_array=[]
-robot_group_array=[]
-"""for i in range(0,len(listen_list_human)):
-	wx.AddListenChat(who=listen_list_human[i], savepic=False)  # 添加监听对象并且不自动保存新消息图片
-	robot=Robot(listen_list_human[i],0,role,client,pretrained)#role表示角色
-	robot_human_array.append(robot)"""
+# 为每个群聊/人设计一个机器人,role为角色,pretrain是自己定义的预先对话
 for i in range(0,len(listen_list_group)):
-	wx2.AddListenChat(who=listen_list_group[i], savepic=False)  
-	robot=Robot(listen_list_group[i],1,role,client,pretrained)
+	wx.AddListenChat(who=listen_list_group[i], savepic=False)  
+	robot=gpt_robot.Robot(listen_list_group[i],1,role,client,pretrained)
 	robot_group_array.append(robot)
 
-wait = 10
+wait = 10#设置接收时间间隔,若设置太短容易使程序频繁拉取信息的过程中漏掉某些信息
+
 while True:
-	#receive_message(wx,0,robot_human_array)
-	receive_message(wx2,1,robot_group_array)
+	gpt_robot.receive_message(wx,1,robot_group_array,condition,condition_type)#receive_message函数的type,0代表私聊,1代表群聊
 	time.sleep(wait)
