@@ -3,3 +3,4 @@ Pillow
 pywin32
 psutil
 pyperclip
+openai
