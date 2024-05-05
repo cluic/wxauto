@@ -16,10 +16,7 @@ gpt = GPT(
 wx = WeChat()
 # 指定监听目标
 listen_list = [
-    '张三',
-    '李四',
-    '工作群A',
-    '工作群B'
+    '文件传输助手'
 ]
 for i in listen_list:
     wx.AddListenChat(who=i)  # 添加监听对象
@@ -32,7 +29,8 @@ while True:
     for chat in msgs:
         msg = msgs.get(chat)   # 获取消息内容
         for i in msg:
-            if i.type == 'friend':
+            # if i.type == 'friend':
+            if i.type == 'self':
                 # ===================================================
                 # 处理消息逻辑
                 

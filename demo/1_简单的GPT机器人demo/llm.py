@@ -1,4 +1,5 @@
-import openai
+# import openai
+from openai import OpenAI
 import os
 import random
 
@@ -12,7 +13,8 @@ class GPT:
         if proxy:
             os.environ['HTTP_PROXY'] = proxy
             os.environ['HTTPS_PROXY'] = proxy
-        self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
+        # self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.initialize(prompt)
 
     def initialize(self, prompt=None):
@@ -29,12 +31,12 @@ class GPT:
         else:
             self.messages = [{"role": "system", "content":default_prompt}]
 
-    def chat(self, prompt, model="gpt-3.5-turbo"):
+    def chat(self, prompt, model="gpt-4.0-turbo"):
         """对话。
 
         Args:
             prompt (str): 用户输入。
-            model (str): 模型，默认为 gpt-3.5-turbo。
+            model (str): 模型，默认为 gpt-4.0-turbo。
         
         Returns:
             str: 模型回复。
@@ -46,6 +48,8 @@ class GPT:
             temperature=0.8,
             seed=random.randint(0, 1000)
         )
+        # print(response)
+        print(response['choices'][0]['message']['content'])
         reply = response.choices[0].message.content
         self.messages.append({"role": "assistant", "content": reply})
         return reply
