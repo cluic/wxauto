@@ -1,53 +1,19 @@
 from openai import OpenAI
 from wxauto import *
 
-def receive_message(w,type,robot_array,condition,condition_type):
-	msgs = w.GetListenMessage()
-	for chat in msgs:
-		msg = msgs.get(chat)   # 获取消息内容
-		for i in range(1,len(msg)):
-			print(len(msg))
-			print(type)
-			print(msg[i][0])
-			print(msg[i][1])
-			if msg[i][0]=='SYS' or msg[i][0]=='Self':
-				continue
-			elif type==1 and condition in msg[i][1] :
-				num=0
-				answer=robot_array[num].talk(change_mes(msg[i][1],condition,condition_type))
-			elif type==0 :
-				num=get_number(msg[i][0])
-				print(num)
-				answer=robot_array[num].talk(msg[i][1])
-			else:
-				continue
-			chat.SendMsg(answer)
-
-def change_mes(message,condition,condition_type):
-    if condition_type==1:
-        message_1 = message.replace(condition, "")
-    return message_1
-
-def get_number(name):
-	global listen_list_human
-	for i in range(0,len(listen_list_human)):
-		if name==listen_list_human[i]:
-			return i
-
-
-
 class Robot:
-	def __init__(self,name,type,role,client,pretrained):
-		self.name = name
-		self.type = type
-		self.role = role
-		self.client = client
-		self.mes_history = self.prepare(role,pretrained)
+	def __init__(self,human_group_info,client):
+		self.human_group_info = human_group_info	
+		self.client = client#获取openai实例
+		self.mes_history = self.prepare(human_group_info['role_file'],human_group_info['pretrained_file'])
+		self.condition = human_group_info['condition']
+		self.condition_type = human_group_info['condition_type']
 
 	def _read_(self, role):
 		with open(role, 'r', encoding='utf-8') as file:
 			return file.readlines()
 
+	#通过插入角色预设和多段提前对话，达到预训练的效果
 	def prepare(self, role_path,pretrained_path):
 		role = self._read_(role_path)
 		pretrain = self._read_(pretrained_path)
@@ -58,16 +24,52 @@ class Robot:
 			else:
 				pre.append( {"role": "assistant", "content": pretrain[i]})
 		return pre
-
-				
-	def talk(self,question):
+	
+	#输入问题，输出答案
+	def generate_answer(self,question):	
 		self.mes_history.append({"role": "user", "content": question})	
 		completion = self.client.chat.completions.create(
 		model="gpt-4-turbo-preview",
 		messages=self.mes_history
-		)
+		)#导入历史对话，使得GPT拥有历史记忆
 		answer=completion.choices[0].message.content
 		self.mes_history.append( {"role": "assistant", "content": answer})
 		return answer
 
+	#判断是否需要去掉关键词并执行操作
+	def change_mes(self,message):
+		if self.condition_type==1:
+			message_modify = message.replace(self.condition, "")
+			return message_modify
+		else:
+			return message
 
+	#获取用户对应机器人的的编号
+	def get_number(name):
+		global listen_list_human
+		for i in range(0,len(listen_list_human)):
+			if name==listen_list_human[i]:
+				return i
+
+	def chat(self,msgs):#与机器人实现聊天
+		chat_target = None
+		for chat in msgs:#找到相应的聊天窗口
+			if chat.who == self.human_group_info['name']:
+				chat_target = chat
+				break
+		if chat_target is None:
+			return
+		msg = msgs.get(chat_target)   # 获取消息内容
+		for i in range(1,len(msg)):
+			#打印消息内容，用于调试
+			print(msg[i][0])
+			print(msg[i][1])
+
+			if msg[i][0]=='SYS' or msg[i][0]=='Self':#如果检测到接收到自己的信息和系统信息如撤回，则跳过
+				continue
+			elif self.condition in msg[i][1] :
+				messaage = self.change_mes(msg[i][1])#选择是否去掉关键词
+				answer=self.generate_answer(messaage)#生成答案
+			else:
+				continue
+			chat.SendMsg(answer)
