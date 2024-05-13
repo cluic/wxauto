@@ -2,6 +2,9 @@ from openai import OpenAI
 from wxauto import *
 from wxauto import gpt_robot
 import time
+import os
+# 设置API密钥
+os.environ['OPENAI_API_KEY'] = 'Your_API_Key'
 
 wx = WeChat()
 
@@ -19,12 +22,18 @@ human_group_info_list = [
 
 
 client = OpenAI()
+gpt_models = ['gpt-4', 
+		  'gpt-4-turbo-preview',
+		  'gpt-3.5-turbo'
+		  ]
+gpt_model = gpt_models[1]#选择模型
+
 
 # 为每个群聊/人设计一个机器人,role为角色,pretrain是自己定义的预先对话
 robot_group_array=[]#机器人列表
 for human_group_info in human_group_info_list:
 	wx.AddListenChat(who=human_group_info['name'], savepic=False)  
-	robot=gpt_robot.Robot(human_group_info,client)
+	robot=gpt_robot.Robot(human_group_info,client,model=gpt_model)
 	robot_group_array.append(robot)
 
 wait = 10#设置接收时间间隔,若设置太短容易使程序频繁拉取信息的过程中漏掉某些信息

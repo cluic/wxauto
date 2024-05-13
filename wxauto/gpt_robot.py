@@ -2,8 +2,9 @@ from openai import OpenAI
 from wxauto import *
 
 class Robot:
-	def __init__(self,human_group_info,client):
-		self.human_group_info = human_group_info	
+	def __init__(self,human_group_info,client,model):
+		self.human_group_info = human_group_info
+		self.model = model	
 		self.client = client#获取openai实例
 		self.mes_history = self.prepare(human_group_info['role_file'],human_group_info['pretrained_file'])
 		self.condition = human_group_info['condition']
@@ -29,7 +30,7 @@ class Robot:
 	def generate_answer(self,question):	
 		self.mes_history.append({"role": "user", "content": question})	
 		completion = self.client.chat.completions.create(
-		model="gpt-4-turbo-preview",
+		model=self.model,
 		messages=self.mes_history
 		)#导入历史对话，使得GPT拥有历史记忆
 		answer=completion.choices[0].message.content
