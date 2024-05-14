@@ -37,7 +37,11 @@ python窗口：
 
 
 ## 示例
-<font color=red>**请先登录PC微信客户端**</font>
+> [!NOTE]
+> 如有问题请先查看[使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md)
+
+**请先登录PC微信客户端**
+
 ```python
 from wxauto import *
 
