@@ -8,7 +8,7 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 [点击下载](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.8.15/WeChatSetup-3.9.8.15.exe)
 
 **文档**：
-[使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md) |
+[使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/doc.md) |
 [云服务器wxauto部署指南](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md#%E4%BA%94%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%83%A8%E7%BD%B2)
 
 |  环境  | 版本 |
@@ -38,7 +38,7 @@ python窗口：
 
 ## 示例
 > [!NOTE]
-> 如有问题请先查看[使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3.md)
+> 如有问题请先查看[使用文档](https://github.com/cluic/wxauto/blob/WeChat3.9.8/doc.md)
 
 **请先登录PC微信客户端**
 
