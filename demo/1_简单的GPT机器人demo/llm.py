@@ -7,8 +7,7 @@ default_prompt = '''you are a helpful assistant'''
 class GPT:
     def __init__(self, api_key, prompt=None, base_url=None, proxy=None):
         self.api_key = api_key
-        if base_url:
-            self.base_url = base_url
+        self.base_url = base_url
         if proxy:
             os.environ['HTTP_PROXY'] = proxy
             os.environ['HTTPS_PROXY'] = proxy
