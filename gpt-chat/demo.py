@@ -1,10 +1,13 @@
 from openai import OpenAI
-from wxauto import *
-from wxauto import gpt_robot
+from model import gpt_robot
 import time
 import os
-# 设置API密钥
-os.environ['OPENAI_API_KEY'] = 'Your_API_Key'
+from wxauto import WeChat
+
+os.chdir(os.path.dirname(__file__))#设置当前文件夹为工作目录
+
+# 设置API密钥，若已经添加到环境变量中，可注释掉这一行
+# os.environ['OPENAI_API_KEY'] = 'Your_API_Key'
 
 wx = WeChat()
 
