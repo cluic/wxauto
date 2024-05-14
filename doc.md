@@ -354,7 +354,7 @@ wx.AddListenChat
 
 ### 1. 解决问题：微信提示版本低无法登录
 
-3.9.8.15版本下，使用以下方法打开微信登录窗口，即可成功登录
+3.9.8.15版本，使用以下方法打开微信登录窗口，即可成功登录
 ```python
 from wxauto import FixVersionError
 
