@@ -7,14 +7,14 @@ from wxauto import WeChat
 os.chdir(os.path.dirname(__file__))#设置当前文件夹为工作目录
 
 # 设置API密钥，若已经添加到环境变量中，可注释掉这一行
-# os.environ['OPENAI_API_KEY'] = 'Your_API_Key'
+os.environ['OPENAI_API_KEY'] = 'Your_API_Key'
 
 wx = WeChat()
 
 #创建一个人/群聊列表
 human_group_info_list = [
-    {'name': '健身群', 'condition': '@lzc', 'condition_type': 1, 'role_file': 'role/kobe.txt', 'pretrained_file': 'pretrained/kobe_1.txt'},
-    {'name': 'lzcc', 'condition': '', 'condition_type': 0, 'role_file': 'role/kobe.txt', 'pretrained_file': 'pretrained/kobe_1.txt'}
+    {'name': 'groups', 'condition': '@myself', 'condition_type': 1, 'role_file': 'role/kobe.txt', 'pretrained_file': 'pretrained/kobe_1.txt'},
+    {'name': 'human', 'condition': '', 'condition_type': 0, 'role_file': 'role/kobe.txt', 'pretrained_file': 'pretrained/kobe_1.txt'}
 ]
 
 # name: 群组/人名称
