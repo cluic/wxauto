@@ -1,16 +1,15 @@
 """
 Author: Cluic
-Update: 2024-04-21
-Version: 3.9.8.15.3
+Update: 2024-05-14
+Version: 3.9.8.15.6
 """
 
-import uiautomation as uia
+from . import uiautomation as uia
 from .languages import *
 from .utils import *
 from .elements import *
 from .errors import *
 from .color import *
-import datetime
 import time
 import os
 import re
@@ -73,6 +72,7 @@ class WeChat(WeChatBase):
         if wxversion != self.VERSION:
             Warnings.lightred(self._lang('版本不一致', 'WARNING').format(wxversion, self.VERSION), stacklevel=2)
             return False
+    
     
     def _show(self):
         self.HWND = FindWindow(classname='WeChatMainWndForPC')
@@ -214,8 +214,10 @@ class WeChat(WeChatBase):
             if len(self.SessionBox.GetChildren()[1].GetChildren()) > 1:
                 self.B_Search.SendKeys('{Esc}')
             if notfound == 'raise':
+                self.B_Search.SendKeys('{Esc}')
                 raise TargetNotFoundError(f'未查询到目标：{who}')
             elif notfound == 'ignore':
+                self.B_Search.SendKeys('{Esc}')
                 return None
         chatname = firstresult.Name
         firstresult.Click(simulateMove=False)
@@ -252,7 +254,9 @@ class WeChat(WeChatBase):
         if atwnd.Exists(maxSearchSeconds=0.1):
             atwnd.ListItemControl(Name='所有人').Click(simulateMove=False)
             if msg:
-                self.SendMsg(msg, clear=False)
+                if not msg.startswith('\n'):
+                    msg = '\n' + msg
+                self.SendMsg(msg, who=who, clear=False)
             else:
                 editbox.SendKeys('{Enter}')
 
@@ -298,17 +302,17 @@ class WeChat(WeChatBase):
                 atwnd = self.UiaAPI.PaneControl(ClassName='ChatContactMenu')
                 if atwnd.Exists(maxSearchSeconds=0.1):
                     atwnd.SendKeys('{ENTER}')
+                    if msg and not msg.startswith('\n'):
+                        msg = '\n' + msg
 
         if msg:
             t0 = time.time()
             while True:
                 if time.time() - t0 > 10:
                     raise TimeoutError(f'发送消息超时 --> {editbox.Name} - {msg}')
-                editbox.SetFocus()
-                time.sleep(0.1)
                 SetClipboardText(msg)
                 editbox.SendKeys('{Ctrl}v')
-                if editbox.GetValuePattern().Value.strip('￼'):
+                if editbox.GetValuePattern().Value:
                     break
         editbox.SendKeys('{Enter}')
         
@@ -555,6 +559,63 @@ class WeChat(WeChatBase):
             del self.listen[who]
         else:
             Warnings.lightred(f'未找到监听对象：{who}', stacklevel=2)
+
+    def AddNewFriend(self, keywords, addmsg=None, remark=None, tags=None):
+        """添加新的好友
+
+        Args:
+            keywords (str): 搜索关键词，微信号、手机号、QQ号
+            addmsg (str, optional): 添加好友的消息
+            remark (str, optional): 备注名
+            tags (list, optional): 标签列表
+
+        Example:
+            >>> wx = WeChat()
+            >>> keywords = '13800000000'      # 微信号、手机号、QQ号
+            >>> addmsg = '你好，我是xxxx'      # 添加好友的消息
+            >>> remark = '备注名字'            # 备注名
+            >>> tags = ['朋友', '同事']        # 标签列表
+            >>> wx.AddNewFriend(keywords, addmsg=addmsg, remark=remark, tags=tags)
+        """
+        self._show()
+        self.SwitchToContact()
+        self.SessionBox.ButtonControl(Name='添加朋友').Click(simulateMove=False)
+        edit = self.SessionBox.EditControl(Name='微信号/手机号')
+        edit.Click(simulateMove=False)
+        edit.SendKeys(keywords)
+        self.SessionBox.TextControl(Name=f'搜索：{keywords}').Click(simulateMove=False)
+
+        ContactProfileWnd = uia.PaneControl(ClassName='ContactProfileWnd')
+        if ContactProfileWnd.Exists(maxSearchSeconds=2):
+            # 点击添加到通讯录
+            ContactProfileWnd.ButtonControl(Name='添加到通讯录').Click(simulateMove=False)
+        else:
+            print('未找到联系人')
+            return False
+
+        NewFriendsWnd = self.UiaAPI.WindowControl(ClassName='WeUIDialog')
+        if NewFriendsWnd.Exists(maxSearchSeconds=2):
+            if addmsg:
+                msgedit = NewFriendsWnd.TextControl(Name="发送添加朋友申请").GetParentControl().EditControl()
+                msgedit.Click(simulateMove=False)
+                msgedit.SendKeys('{Ctrl}a', waitTime=0)
+                msgedit.SendKeys(addmsg)
+
+            if remark:
+                remarkedit = NewFriendsWnd.TextControl(Name='备注名').GetParentControl().EditControl()
+                remarkedit.Click(simulateMove=False)
+                remarkedit.SendKeys('{Ctrl}a', waitTime=0)
+                remarkedit.SendKeys(remark)
+
+            if tags:
+                tagedit = NewFriendsWnd.TextControl(Name='标签').GetParentControl().EditControl()
+                for tag in tags:
+                    tagedit.Click(simulateMove=False)
+                    tagedit.SendKeys(tag)
+                    NewFriendsWnd.PaneControl(ClassName='DropdownWindow').TextControl().Click(simulateMove=False)
+
+            NewFriendsWnd.ButtonControl(Name='确定').Click(simulateMove=False)
+        return True
     
 class WeChatFiles:
     def __init__(self, language='cn') -> None:
