@@ -1,4 +1,4 @@
-import uiautomation as uia
+from . import uiautomation as uia
 from .languages import *
 from .utils import *
 from .color import *
@@ -7,12 +7,15 @@ import time
 import os
 import re
 
+
+
 class WxParam:
     SYS_TEXT_HEIGHT = 33
     TIME_TEXT_HEIGHT = 34
     RECALL_TEXT_HEIGHT = 45
     CHAT_TEXT_HEIGHT = 52
     CHAT_IMG_HEIGHT = 117
+    DEFALUT_IMAGE_SAVEPATH = os.path.join(os.getcwd(), '微信图片')
 
 class WeChatBase:
     def _lang(self, text, langtype='MAIN'):
@@ -141,6 +144,8 @@ class ChatWnd(WeChatBase):
         if atwnd.Exists(maxSearchSeconds=0.1):
             atwnd.ListItemControl(Name='所有人').Click(simulateMove=False)
             if msg:
+                if not msg.startswith('\n'):
+                    msg = '\n' + msg
                 self.SendMsg(msg)
             else:
                 self.editbox.SendKeys('{Enter}')
@@ -164,16 +169,16 @@ class ChatWnd(WeChatBase):
                 atwnd = self.UiaAPI.PaneControl(ClassName='ChatContactMenu')
                 if atwnd.Exists(maxSearchSeconds=0.1):
                     atwnd.SendKeys('{ENTER}')
+                    if msg and not msg.startswith('\n'):
+                        msg = '\n' + msg
 
         t0 = time.time()
         while True:
             if time.time() - t0 > 10:
                 raise TimeoutError(f'发送消息超时 --> {self.who} - {msg}')
-            self.editbox.SetFocus()
-            time.sleep(0.1)
             SetClipboardText(msg)
             self.editbox.SendKeys('{Ctrl}v')
-            if self.editbox.GetValuePattern().Value.strip('￼'):
+            if self.editbox.GetValuePattern().Value:
                 break
         self.editbox.SendKeys('{Enter}')
 
@@ -321,6 +326,7 @@ class WeChatImage:
         # tools按钮
         self.t_previous = self.ToolsBox.ButtonControl(Name=self._lang('上一张'))
         self.t_next = self.ToolsBox.ButtonControl(Name=self._lang('下一张'))
+        self.t_zoom = self.ToolsBox.ButtonControl(Name=self._lang('放大'))
         self.t_translate = self.ToolsBox.ButtonControl(Name=self._lang('翻译'))
         self.t_ocr = self.ToolsBox.ButtonControl(Name=self._lang('提取文字'))
         self.t_save = self.ToolsBox.ButtonControl(Name=self._lang('另存为...'))
@@ -361,12 +367,16 @@ class WeChatImage:
         Returns:
             str: 文件保存路径，即savepath
         """
+        
         if not savepath:
-            savepath = os.path.join(os.getcwd(), '微信图片', f"微信图片_{datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')}.jpg")
+            savepath = os.path.join(WxParam.DEFALUT_IMAGE_SAVEPATH, f"微信图片_{datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')}.jpg")
         if not os.path.exists(os.path.split(savepath)[0]):
             os.makedirs(os.path.split(savepath)[0])
             
-        self.t_save.Click(simulateMove=False)
+        if self.t_zoom.Exists(maxSearchSeconds=5):
+            self.t_save.Click(simulateMove=False)
+        else:
+            raise TimeoutError('下载超时')
         t0 = time.time()
         while True:
             if time.time() - t0 > timeout:
