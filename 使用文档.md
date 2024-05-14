@@ -23,7 +23,7 @@ git clone https://github.com/cluic/wxauto.git
 | :--------------: | :----: | :------------------------: |
 |      utils       | 文件夹 | 深入研究用到的小工具及图片 |
 |      wxauto      | 文件夹 |        主项目文件夹        |
-|       demo       | 文件夹 |       简单的使用示例       |
+|     demo.py      |  文件  |       简单的使用示例       |
 |     LICENSE      |  文件  |        license文件         |
 | requirements.txt |  文件  |      第三方依赖库文件      |
 
@@ -304,7 +304,7 @@ wx.AddListenChat
 >>> wx.SwitchToContact()
 ```
 
-#### 13. 获取当前聊天成员列表
+### 13. 获取当前聊天成员列表
 
 ```python
 >>> wx.GetGroupMembers()
@@ -313,7 +313,7 @@ wx.AddListenChat
 
 > 注：该方法获取到的为好友昵称或备注，有备注为备注，没备注为昵称
 
-#### 14. 获取所有好友列表
+### 14. 获取所有好友列表
 
 ```python
 >>> wx.GetAllFriends()
@@ -331,7 +331,47 @@ wx.AddListenChat
 > 
 > 2. 该方法未经过大量测试，可能存在未知问题，如有问题请微信群内反馈
 
-## 四、使用案例
+### 15. 发起好友申请
+
+```python
+>>> keywords = '13800000000'      # 微信号、手机号、QQ号
+>>> addmsg = '你好，我是xxxx'      # 添加好友的消息
+>>> remark = '备注名字'            # 备注名
+>>> tags = ['朋友', '同事']        # 标签列表
+>>> wx.AddNewFriend(keywords, addmsg=addmsg, remark=remark, tags=tags)
+```
+
+| 参数名  | 类型 | 默认值 |       说明       |
+| :-----: | :--: | :----: | :--------------: |
+| keywords | str | / | 微信号、手机号、QQ号 |
+| addmsg | str | '你好，我是xxxx' | 添加好友的消息 |
+| remark | str | None | 备注名 |
+
+> 注：微信有一定的限制，如果频繁添加好友，可能会被限制添加好友的权限，所以请谨慎使用！！！
+
+
+## 四、其他
+
+### 1. 解决问题：微信提示版本低无法登录
+
+3.9.8.15版本下，使用以下方法打开微信登录窗口，即可成功登录
+```python
+from wxauto import FixVersionError
+
+FixVersionError()
+```
+
+### 2. savepic保存图片默认路径设置
+
+按以下设置即可
+```python
+from wxauto.elements import WxParam
+
+WxParam.DEFALUT_IMAGE_SAVEPATH = r"D:\AAA\BBB"
+```
+
+
+## 五、使用案例
 
 ### 1. 监听指定群或好友消息并回复收到
 
@@ -357,7 +397,7 @@ wait = 10  # 设置10秒查看一次是否有新消息
 while True:
     msgs = wx.GetListenMessage()
     for chat in msgs:
-        msg = msgs.get(chat)   # 获取消息内容
+        one_msgs = msgs.get(chat)   # 获取消息内容
         # ===================================================
         # 处理消息逻辑
         # 
@@ -366,7 +406,9 @@ while True:
         # ===================================================
         
         # 回复收到
-        chat.SendMsg('收到')  # 回复收到
+        for msg in one_msgs:
+            if msg.type == 'friend':
+                chat.SendMsg('收到')  # 回复收到
     time.sleep(wait)
         
 ```
@@ -385,7 +427,7 @@ wait = 10  # 设置10秒查看一次是否有新消息
 while True:
     msg = wx.GetNextNewMessage(savepic=True)
     # 如果获取到新消息了，则回复收到
-    if msg:
+    if msg and msg.type == 'friend':
         # ===================================================
         # 处理消息逻辑
         # 
