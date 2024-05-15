@@ -95,7 +95,7 @@ class WeChat(WeChatBase):
         amount = 0
         if matchobj:
             try:
-                amount = int([i for i in SessionItem.GetChildren()[0].GetChildren() if type(i) == uia.uiautomation.TextControl][0].Name)
+                amount = int([i for i in SessionItem.GetChildren()[0].GetChildren() if type(i) == uia.TextControl][0].Name)
             except:
                 pass
         if amount:
