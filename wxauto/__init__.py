@@ -1,3 +1,10 @@
 from .wxauto import WeChat
+from .utils import *
 
-VERSION = '3.9.8.15'
+__version__ = VERSION
+
+__all__ = [
+    'WeChat', 
+    'VERSION',
+    'FixVersionError'
+]

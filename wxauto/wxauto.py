@@ -1,7 +1,7 @@
 """
 Author: Cluic
-Update: 2024-05-14
-Version: 3.9.8.15.6
+Update: 2024-05-19
+Version: 3.9.8.15.8
 """
 
 from . import uiautomation as uia
@@ -19,22 +19,28 @@ except:
     from typing_extensions import Literal
 
 class WeChat(WeChatBase):
-    def __init__(self, language='cn') -> None:
+    VERSION: str = '3.9.8.15'
+    lastmsgid: str = None
+    listen: dict = dict()
+    SessionItemList: list = []
+    UiaAPI: uia.WindowControl = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
+
+    def __init__(
+            self, 
+            language: Literal['cn', 'cn_t', 'en'] = 'cn', 
+            debug: bool = False
+        ) -> None:
         """微信UI自动化实例
 
         Args:
             language (str, optional): 微信客户端语言版本, 可选: cn简体中文  cn_t繁体中文  en英文, 默认cn, 即简体中文
         """
-        self.VERSION = '3.9.8.15'
+        set_debug(debug)
         self.language = language
-        self.lastmsgid = None
-        self.listen = dict()
         self._checkversion()
-        self.UiaAPI = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
         self._show()
-        self.SessionItemList = []
         MainControl1 = [i for i in self.UiaAPI.GetChildren() if not i.ClassName][0]
-        MainControl2 = MainControl1.GetChildren()[0]
+        MainControl2 = MainControl1.GetFirstChildControl()
         # 三个布局，导航栏(A)、聊天列表(B)、聊天框(C)
         # _______________
         # |■|———|    -□×|
@@ -63,6 +69,8 @@ class WeChat(WeChatBase):
         self.C_MsgList = self.ChatBox.ListControl(Name=self._lang('消息'))
         
         self.nickname = self.A_MyIcon.Name
+        msgs_ = self.GetAllMessage()
+        self.usedmsgid = [i[-1] for i in msgs_]
         print(f'初始化成功，获取到已登录窗口：{self.nickname}')
     
     def _checkversion(self):
@@ -80,6 +88,11 @@ class WeChat(WeChatBase):
         win32gui.SetWindowPos(self.HWND, -1, 0, 0, 0, 0, 3)
         win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
         self.UiaAPI.SwitchToThisWindow()
+
+    def _refresh(self):
+        self.UiaAPI.SendKeys('{Ctrl}{Alt}w')
+        self.UiaAPI.SendKeys('{Ctrl}{Alt}w')
+        self._show()
     
     def GetSessionAmont(self, SessionItem):
         """获取聊天对象名和新消息条数
@@ -95,13 +108,10 @@ class WeChat(WeChatBase):
         amount = 0
         if matchobj:
             try:
-                amount = int([i for i in SessionItem.GetChildren()[0].GetChildren() if type(i) == uia.TextControl][0].Name)
+                amount = int([i for i in SessionItem.GetFirstChildControl().GetChildren() if type(i) == uia.TextControl][0].Name)
             except:
                 pass
-        if amount:
-            sessionname = SessionItem.Name.replace(f'{amount}条新消息','')
-        else:
-            sessionname = SessionItem.Name
+        sessionname = SessionItem.Name if SessionItem.ButtonControl().Name == 'SessionListItem' else SessionItem.ButtonControl().Name
         return sessionname, amount
     
     def CheckNewMessage(self):
@@ -109,50 +119,87 @@ class WeChat(WeChatBase):
         self._show()
         return IsRedPixel(self.A_ChatIcon)
     
-    def GetNextNewMessage(self, savepic=False):
+    def GetNextNewMessage(self, savepic=False, savefile=False, savevoice=False, timeout=10):
         """获取下一个新消息"""
         msgs_ = self.GetAllMessage()
-        if self.lastmsgid is None:
-            self.lastmsgid = msgs_[-1][-1]
-            return 
-        if self.lastmsgid is not None and self.lastmsgid in [i[-1] for i in msgs_[:-1]]:
-            print('获取当前窗口新消息')
-            idx = [i[-1] for i in msgs_].index(self.lastmsgid)
-            MsgItems = self.C_MsgList.GetChildren()[idx+1:]
-            msgs = self._getmsgs(MsgItems, savepic)
-            self.lastmsgid = msgs[-1][-1]
-            return {self.CurrentChat(): msgs}
+        msgids = [i[-1] for i in msgs_]
 
-        elif self.CheckNewMessage():
-            print('获取其他窗口新消息')
+        if not self.usedmsgid:
+            self.usedmsgid = msgids
+        
+        newmsgids = [i for i in msgids if i not in self.usedmsgid]
+        oldmsgids = [i for i in self.usedmsgid if i in msgids]
+        if newmsgids and oldmsgids:
+            MsgItems = self.C_MsgList.GetChildren()
+            msgids = [''.join([str(i) for i in i.GetRuntimeId()]) for i in MsgItems]
+            new = []
+            for i in range(len(msgids)-1, -1, -1):
+                if msgids[i] in self.usedmsgid:
+                    new = msgids[i+1:]
+                    break
+            NewMsgItems = [
+                i for i in MsgItems 
+                if ''.join([str(i) for i in i.GetRuntimeId()]) in new
+                and i.ControlTypeName == 'ListItemControl'
+            ]
+            if NewMsgItems:
+                wxlog.debug('获取当前窗口新消息')
+                msgs = self._getmsgs(NewMsgItems, savepic, savefile, savevoice)
+                self.usedmsgid = msgids
+                return {self.CurrentChat(): msgs}
+
+        if self.CheckNewMessage():
+            wxlog.debug('获取其他窗口新消息')
+            t0 = time.time()
             while True:
+                if time.time() - t0 > timeout:
+                    wxlog.debug('获取新消息超时')
+                    return {}
                 self.A_ChatIcon.DoubleClick(simulateMove=False)
                 sessiondict = self.GetSessionList(newmessage=True)
                 if sessiondict:
                     break
             for session in sessiondict:
                 self.ChatWith(session)
-                MsgItems = self.C_MsgList.GetChildren()[-sessiondict[session]:]
-                msgs = self._getmsgs(MsgItems, savepic)
-                self.lastmsgid = msgs[-1][-1]
+                NewMsgItems = self.C_MsgList.GetChildren()[-sessiondict[session]:]
+                msgs = self._getmsgs(NewMsgItems, savepic, savefile, savevoice)
+                msgs_ = self.GetAllMessage()
+                self.usedmsgid = [i[-1] for i in msgs_]
                 return {session:msgs}
         else:
-            # print('没有新消息')
-            return None
+            # wxlog.debug('没有新消息')
+            return {}
     
-    def GetAllNewMessage(self):
-        """获取所有新消息"""
+    # def GetAllNewMessage(self):
+    #     """获取所有新消息"""
+    #     newmessages = {}
+    #     while True:
+    #         if self.CheckNewMessage():
+    #             self.A_ChatIcon.DoubleClick(simulateMove=False)
+    #             sessiondict = self.GetSessionList(newmessage=True)
+    #             for session in sessiondict:
+    #                 self.ChatWith(session)
+    #                 newmessages[session] = self.GetAllMessage()[-sessiondict[session]:]
+    #         else:
+    #             break
+    #     # self.ChatWith(self._lang('文件传输助手'))
+    #     return newmessages
+    def GetAllNewMessage(self, max_round=10):
+        """获取所有新消息
+        
+        Args:
+            max_round (int): 最大获取次数  * 这里是为了避免某几个窗口一直有新消息，导致无法停止
+        """
         newmessages = {}
-        while True:
-            if self.CheckNewMessage():
-                self.A_ChatIcon.DoubleClick(simulateMove=False)
-                sessiondict = self.GetSessionList(newmessage=True)
-                for session in sessiondict:
-                    self.ChatWith(session)
-                    newmessages[session] = self.GetAllMessage()[-sessiondict[session]:]
+        for _ in range(max_round):
+            newmsg = self.GetNextNewMessage()
+            if newmsg:
+                for session in newmsg:
+                    if session not in newmessages:
+                        newmessages[session] = []
+                    newmessages[session].extend(newmsg[session])
             else:
                 break
-        self.ChatWith(self._lang('文件传输助手'))
         return newmessages
     
     def GetSessionList(self, reset=False, newmessage=False):
@@ -187,12 +234,30 @@ class WeChat(WeChatBase):
             return {i:SessionList[i] for i in SessionList if SessionList[i] > 0}
         return SessionList
     
-    def ChatWith(self, who, notfound: Literal['raise', 'ignore']='ignore'):
+    def GetSession(self):
+        """获取当前聊天列表中的所有聊天对象
+
+        Returns:
+            SessionElement: 聊天对象列表
+
+        Example:
+            >>> wx = WeChat()
+            >>> sessions = wx.GetSession()
+            >>> for session in sessions:
+            ...     print(f"聊天对象名称: {session.name}")
+            ...     print(f"最后一条消息时间: {session.time}")
+            ...     print(f"最后一条消息内容: {session.content}")
+            ...     print(f"是否有新消息: {session.isnew}", end='\n\n')
+        """
+        sessions = self.SessionBox.ListControl()
+        return [SessionElement(i) for i in sessions.GetChildren()]
+    
+    def ChatWith(self, who, timeout=2):
         '''打开某个聊天框
         
         Args:
             who ( str ): 要打开的聊天框好友名;  * 最好完整匹配，不完全匹配只会选取搜索框第一个
-            notfound ( str, optional ): 未找到时的处理方式，可选：raise-抛出异常  ignore-忽略，默认ignore
+            timeout ( num, optional ): 超时时间，默认2秒
             
         Returns:
             chatname ( str ): 匹配值第一个的完整名字
@@ -200,28 +265,27 @@ class WeChat(WeChatBase):
         self._show()
         sessiondict = self.GetSessionList(True)
         if who in list(sessiondict.keys())[:-1]:
-            if sessiondict[who] > 0:
-                who1 = f"{who}{sessiondict[who]}条新消息"
-            else:
-                who1 = who
-            self.SessionBox.ListItemControl(Name=who1).Click(simulateMove=False)
+            self.SessionBox.ListItemControl(RegexName=who).Click(simulateMove=False)
             return who
-        self.UiaAPI.SendKeys('{Ctrl}f', waitTime=1)
-        self.B_Search.SendKeys(who, waitTime=1.5)
-        SearchResut = self.SessionBox.GetChildren()[1].GetChildren()[1]
-        firstresult = [i for i in SearchResut.GetChildren()[0].GetChildren() if who in i.Name][0]
-        if firstresult.Name == f'搜索 {who}':
-            if len(self.SessionBox.GetChildren()[1].GetChildren()) > 1:
-                self.B_Search.SendKeys('{Esc}')
-            if notfound == 'raise':
-                self.B_Search.SendKeys('{Esc}')
-                raise TargetNotFoundError(f'未查询到目标：{who}')
-            elif notfound == 'ignore':
-                self.B_Search.SendKeys('{Esc}')
-                return None
-        chatname = firstresult.Name
-        firstresult.Click(simulateMove=False)
-        return chatname
+        else:
+            self.UiaAPI.SendKeys('{Ctrl}f', waitTime=1)
+            self.B_Search.SendKeys(who, waitTime=1.5)
+            target_control = self.SessionBox.TextControl(Name=f"<em>{who}</em>")
+            if target_control.Exists(timeout):
+                wxlog.debug('选择完全匹配项')
+                target_control.Click(simulateMove=False)
+                return who
+            else:
+                search_result_control = self.SessionBox.GetChildren()[1].GetChildren()[1].GetFirstChildControl()
+                if not search_result_control.PaneControl(searchDepth=1).TextControl(RegexName='联系人|群聊').Exists(0.1):
+                    wxlog.debug(f'未找到搜索结果: {who}')
+                    self._refresh()
+                    return False
+                wxlog.debug('选择搜索结果第一个')
+                target_control = search_result_control.Control(RegexName=f'.*{who}.*')
+                chatname = target_control.Name
+                target_control.Click(simulateMove=False)
+                return chatname
     
     def AtAll(self, msg=None, who=None):
         """@所有人
@@ -376,7 +440,7 @@ class WeChat(WeChatBase):
             Warnings.lightred('所有文件都无法成功发送', stacklevel=2)
             return False
             
-    def GetAllMessage(self, savepic=False, n=0):
+    def GetAllMessage(self, savepic=False, savefile=False, savevoice=False):
         '''获取当前窗口中加载的所有聊天记录
         
         Args:
@@ -385,8 +449,10 @@ class WeChat(WeChatBase):
         Returns:
             list: 聊天记录信息
         '''
+        if not self.C_MsgList.Exists(0.2):
+            return []
         MsgItems = self.C_MsgList.GetChildren()
-        msgs = self._getmsgs(MsgItems, savepic)
+        msgs = self._getmsgs(MsgItems, savepic, savefile=savefile, savevoice=savevoice)
         return msgs
     
     def LoadMoreMessage(self):
@@ -395,7 +461,7 @@ class WeChat(WeChatBase):
         Returns:
             bool: 是否成功加载更多聊天信息
         """
-        loadmore = self.C_MsgList.GetChildren()[0]
+        loadmore = self.C_MsgList.GetFirstChildControl()
         loadmore_top = loadmore.BoundingRectangle.top
         top = self.C_MsgList.BoundingRectangle.top
         while True:
@@ -434,15 +500,15 @@ class WeChat(WeChatBase):
             >>> newfriends = wx.GetNewFriends()
             >>> tags = ['标签1', '标签2']
             >>> for friend in newfriends:
-            >>>     remark = f'备注{friend.name}'
-            >>>     friend.Accept(remark=remark, tags=tags)  # 接受好友请求，并设置备注和标签
+            ...     remark = f'备注{friend.name}'
+            ...     friend.Accept(remark=remark, tags=tags)  # 接受好友请求，并设置备注和标签
         """
         self._show()
         self.SwitchToContact()
         self.SessionBox.ButtonControl(Name='ContactListItem').Click(simulateMove=False)
         NewFriendsList = [NewFriendsElement(i, self) for i in self.ChatBox.ListControl(Name='新的朋友').GetChildren()]
         AcceptableNewFriendsList = [i for i in NewFriendsList if i.acceptable]
-        print(f'获取到 {len(AcceptableNewFriendsList)} 条新的好友申请')
+        wxlog.debug(f'获取到 {len(AcceptableNewFriendsList)} 条新的好友申请')
         return AcceptableNewFriendsList
     
     def AddListenChat(self, who, savepic=False):
@@ -510,7 +576,7 @@ class WeChat(WeChatBase):
             return 
         finally:
             uia.SetGlobalSearchTimeout(10)
-        roominfoWnd = self.UiaAPI.WindowControl(ClassName='SessionChatRoomDetailWnd', searchDepth=1)
+        roominfoWnd = self.UiaAPI.Control(ClassName='SessionChatRoomDetailWnd', searchDepth=1)
         more = roominfoWnd.ButtonControl(Name='查看更多', searchDepth=8)
         try:
             uia.SetGlobalSearchTimeout(1)
@@ -590,7 +656,7 @@ class WeChat(WeChatBase):
             # 点击添加到通讯录
             ContactProfileWnd.ButtonControl(Name='添加到通讯录').Click(simulateMove=False)
         else:
-            print('未找到联系人')
+            wxlog.debug('未找到联系人')
             return False
 
         NewFriendsWnd = self.UiaAPI.WindowControl(ClassName='WeUIDialog')
@@ -710,7 +776,7 @@ class WeChatFiles:
             self.item = self.SessionBox.ListItemControl(Name=who)
             self.item.Click(simulateMove=False)
         else:
-            print(f'未查询到目标：{who}')
+            wxlog.debug(f'未查询到目标：{who}')
         itemfileslist = []
 
         item = self.SessionBox.ListControl(Name='', searchDepth=7).GetParentControl()

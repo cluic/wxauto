@@ -25,7 +25,7 @@ import comtypes.client
 from typing import (Any, Callable, Dict, List, Iterable, Tuple)  # need pip install typing for Python3.4 or lower
 TreeNode = Any
 
-print('uia done')
+# print('uia done')
 AUTHOR_MAIL = 'yinkaisheng@live.com'
 METRO_WINDOW_CLASS_NAME = 'Windows.UI.Core.CoreWindow'  # for Windows 8 and 8.1
 SEARCH_INTERVAL = 0.5  # search control interval seconds
@@ -5885,6 +5885,57 @@ class Control():
                     return next_
             else:
                 break
+
+    def GetChildControl(self, index: int, control_type: str = None) -> 'Control':
+        """
+        Get the nth child control.
+        index: int, starts with 0.
+        control_type: `Control` or its subclass, if not None, only return the nth control that matches the control_type.
+        Return `Control` subclass or None.
+        """
+        children = self.GetChildren()
+        if control_type:
+            children = [child for child in children if child.ControlTypeName == control_type]
+        if index < len(children):
+            return children[index]
+        else:
+            return None
+        
+    def GetAllProgeny(self) -> List[List['Control']]:
+        """
+        Get all progeny controls.
+        Return List[List[Control]], a list of list of `Control` subclasses.
+        """
+        all_elements = []
+
+        def find_all_elements(element, depth=0):
+            children = element.GetChildren()
+            if depth == len(all_elements):
+                all_elements.append([])
+            all_elements[depth].append(element)
+            for child in children:
+                find_all_elements(child, depth+1)
+            return all_elements
+        
+        return find_all_elements(self)
+    
+    def GetProgenyControl(self, depth: int=1, index: int=0, control_type: str = None) -> 'Control':
+        """
+        Get the nth control in the mth depth.
+        depth: int, starts with 0.
+        index: int, starts with 0.
+        control_type: `Control` or its subclass, if not None, only return the nth control that matches the control_type.
+        Return `Control` subclass or None.
+        """
+        progeny = self.GetAllProgeny()
+        try:
+            controls = progeny[depth]
+            if control_type:
+                controls = [child for child in controls if child.ControlTypeName == control_type]
+            if index < len(progeny):
+                return controls[index]
+        except IndexError:
+            return
 
     def GetChildren(self) -> List['Control']:
         """

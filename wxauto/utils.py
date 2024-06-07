@@ -11,6 +11,7 @@ import ctypes
 import psutil
 import shutil
 import winreg
+import logging
 import time
 import os
 import re
@@ -95,7 +96,7 @@ try:
     def GetAllControl(ele):
         def findall(ele, n=0, node=None):
             nn = '\n'
-            nodename = f"[{ele.ControlTypeName}](\"{ele.ClassName}\", \"{ele.Name.replace(nn, '')}\")"
+            nodename = f"[{ele.ControlTypeName} {n}](\"{ele.ClassName}\", \"{ele.Name.replace(nn, '')}\", \"{''.join([str(i) for i in ele.GetRuntimeId()])}\")"
             if not node:
                 node1 = Node(nodename)
             else:
@@ -315,3 +316,40 @@ def FixVersionError():
                 raise Exception('nof found')
         except WindowsError:
             Warning("未找到微信安装路径，请先打开微信启动页面再次尝试运行该方法！")
+
+
+def RollIntoView(win, ele, equal=False):
+    if ele.BoundingRectangle.top < win.BoundingRectangle.top:
+        # 上滚动
+        while True:
+            win.WheelUp(wheelTimes=1, waitTime=0.1)
+            if ele.BoundingRectangle.top >= win.BoundingRectangle.top:
+                break
+
+    elif ele.BoundingRectangle.bottom >= win.BoundingRectangle.bottom:
+        # 下滚动
+        while True:
+            win.WheelDown(wheelTimes=1, waitTime=0.1)
+            if equal:
+                if ele.BoundingRectangle.bottom <= win.BoundingRectangle.bottom:
+                    break
+            else:
+                if ele.BoundingRectangle.bottom < win.BoundingRectangle.bottom:
+                    break
+
+wxlog = logging.getLogger('wxauto')
+wxlog.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d): %(message)s')
+console_handler.setFormatter(formatter)
+wxlog.addHandler(console_handler)
+wxlog.propagate = False
+
+def set_debug(debug: bool):
+    if debug:
+        wxlog.setLevel(logging.DEBUG)
+        console_handler.setLevel(logging.DEBUG)
+    else:
+        wxlog.setLevel(logging.INFO)
+        console_handler.setLevel(logging.INFO)
