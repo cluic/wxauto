@@ -15,7 +15,7 @@ class WxParam:
     RECALL_TEXT_HEIGHT = 45
     CHAT_TEXT_HEIGHT = 52
     CHAT_IMG_HEIGHT = 117
-    DEFALUT_IMAGE_SAVEPATH = os.path.join(os.getcwd(), '微信图片')
+    DEFALUT_SAVEPATH = os.path.join(os.getcwd(), 'wxauto文件')
 
 class WeChatBase:
     def _lang(self, text, langtype='MAIN'):
@@ -132,7 +132,6 @@ class WeChatBase:
                 try:
                     filecontrol = msgitem.ButtonControl(Name='')
                     filecontrol.RightClick(simulateMove=False)
-                    paths = list()
                     menu = self.UiaAPI.MenuControl(ClassName='CMenuWnd')
                     options = [i for i in menu.ListControl().GetChildren() if i.ControlTypeName == 'MenuItemControl']
                     copy = [i for i in options if i.Name == '复制']
@@ -143,7 +142,12 @@ class WeChatBase:
                         filecontrol.RightClick(simulateMove=False)
                 except:
                     pass
-        return ReadClipboardData().get('15')[0]
+        filepath = ReadClipboardData().get('15')[0]
+        savepath = os.path.join(WxParam.DEFALUT_SAVEPATH, os.path.split(filepath)[1])
+        if not os.path.exists(WxParam.DEFALUT_SAVEPATH):
+            os.makedirs(WxParam.DEFALUT_SAVEPATH)
+        shutil.copyfile(filepath, savepath)
+        return savepath
 
     def _get_voice_text(self, msgitem):
         if msgitem.GetProgenyControl(8, 4):
@@ -170,8 +174,6 @@ class WeChatBase:
                 text = msgitem.GetProgenyControl(8, 4).Name
             time.sleep(0.1)
 
-            
-    
 
 class ChatWnd(WeChatBase):
     def __init__(self, who, language='cn'):
@@ -447,7 +449,7 @@ class WeChatImage:
         """
         
         if not savepath:
-            savepath = os.path.join(WxParam.DEFALUT_IMAGE_SAVEPATH, f"微信图片_{datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')}.jpg")
+            savepath = os.path.join(WxParam.DEFALUT_SAVEPATH, f"微信图片_{datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')}.jpg")
         if not os.path.exists(os.path.split(savepath)[0]):
             os.makedirs(os.path.split(savepath)[0])
             
@@ -662,9 +664,12 @@ class ContactElement:
 
 class SessionElement:
     def __init__(self, item):
-        self.name = item.GetProgenyControl(4, control_type='TextControl').Name
-        self.time = item.GetProgenyControl(4, 1, control_type='TextControl').Name
-        self.content = item.GetProgenyControl(4, 2, control_type='TextControl').Name
+        self.name = item.GetProgenyControl(4, control_type='TextControl').Name\
+            if item.GetProgenyControl(4, control_type='TextControl') else None
+        self.time = item.GetProgenyControl(4, 1, control_type='TextControl').Name\
+            if item.GetProgenyControl(4, 1, control_type='TextControl') else None
+        self.content = item.GetProgenyControl(4, 2, control_type='TextControl').Name\
+            if item.GetProgenyControl(4, 2, control_type='TextControl') else None
         self.isnew = item.GetProgenyControl(2, 2) is not None
         wxlog.debug(f"============== 【{self.name}】 ==============")
         wxlog.debug(f"最后一条消息时间: {self.time}")
