@@ -49,7 +49,7 @@ class WeChatBase:
                 winrect = MsgItem.BoundingRectangle
                 mid = (winrect.left + winrect.right)/2
                 if User.BoundingRectangle.left < mid:
-                    if MsgItem.TextControl().BoundingRectangle.top < User.BoundingRectangle.top:
+                    if MsgItem.TextControl().Exists(0.1) and MsgItem.TextControl().BoundingRectangle.top < User.BoundingRectangle.top:
                         name = (User.Name, MsgItem.TextControl().Name)
                     else:
                         name = (User.Name, User.Name)
