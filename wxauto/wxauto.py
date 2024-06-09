@@ -37,7 +37,7 @@ class WeChat(WeChatBase):
         """
         set_debug(debug)
         self.language = language
-        self._checkversion()
+        # self._checkversion()
         self._show()
         MainControl1 = [i for i in self.UiaAPI.GetChildren() if not i.ClassName][0]
         MainControl2 = MainControl1.GetFirstChildControl()
