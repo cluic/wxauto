@@ -81,6 +81,8 @@ wx.GetAllMessage
 | savefile | bool | False  | 是否自动保存聊天文件 |
 | savevioce | bool | False  | 是否自动保存聊天语音转文字内容 |
 
+> 注：大文件可能有bug
+
 ### 2. 打开指定好友聊天窗口
 
 ```python
