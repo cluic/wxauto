@@ -6,5 +6,4 @@ __version__ = VERSION
 __all__ = [
     'WeChat', 
     'VERSION',
-    'FixVersionError'
 ]

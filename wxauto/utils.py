@@ -276,59 +276,6 @@ def ParseWeChatTime(time_str):
         return datetime(*[int(i) for i in [year, month, day, hour, minute]]).strftime('%Y-%m-%d') + f' {hour}:{minute}'
 
 
-def FindPid(process_name):
-    procs = psutil.process_iter(['pid', 'name'])
-    for proc in procs:
-        if process_name in proc.info['name']:
-            return proc.info['pid']
-
-
-def Mver(pid):
-    exepath = psutil.Process(pid).exe()
-    if GetVersionByPath(exepath) != VERSION:
-        Warning(f"该修复方法仅适用于版本号为{VERSION}的微信！")
-        return
-    if not uia.Control(ClassName='WeChatLoginWndForPC', searchDepth=1).Exists(maxSearchSeconds=2):
-        Warning("请先打开微信启动页面再次尝试运行该方法！")
-        return
-    path = os.path.join(os.path.dirname(__file__), 'a.dll')
-    dll = ctypes.WinDLL(path)
-    dll.GetDllBaseAddress.argtypes = [ctypes.c_uint, ctypes.c_wchar_p]
-    dll.GetDllBaseAddress.restype = ctypes.c_void_p
-    dll.WriteMemory.argtypes = [ctypes.c_ulong, ctypes.c_void_p, ctypes.c_ulong]
-    dll.WriteMemory.restype = ctypes.c_bool
-    dll.GetMemory.argtypes = [ctypes.c_ulong, ctypes.c_void_p]
-    dll.GetMemory.restype = ctypes.c_ulong
-    mname = 'WeChatWin.dll'
-    tar = 1661536787
-    base_address = dll.GetDllBaseAddress(pid, mname)
-    address = base_address + 64761648
-    if dll.GetMemory(pid, address) != tar:
-        dll.WriteMemory(pid, address, tar)
-    handle = ctypes.c_void_p(dll._handle)
-    ctypes.windll.kernel32.FreeLibrary(handle)
-
-def FixVersionError():
-    """修复版本低无法登录的问题"""
-    pid = FindPid('WeChat.exe')
-    if pid:
-        Mver(pid)
-        return
-    else:
-        try:
-            registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Tencent\WeChat", 0, winreg.KEY_READ)
-            path, _ = winreg.QueryValueEx(registry_key, "InstallPath")
-            winreg.CloseKey(registry_key)
-            wxpath = os.path.join(path, "WeChat.exe")
-            if os.path.exists(wxpath):
-                os.system(f'start "" "{wxpath}"')
-                FixVersionError()
-            else:
-                raise Exception('nof found')
-        except WindowsError:
-            Warning("未找到微信安装路径，请先打开微信启动页面再次尝试运行该方法！")
-
-
 def RollIntoView(win, ele, equal=False):
     if ele.BoundingRectangle.top < win.BoundingRectangle.top:
         # 上滚动
