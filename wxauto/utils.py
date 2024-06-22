@@ -16,7 +16,7 @@ import time
 import os
 import re
 
-VERSION = "3.9.8.15"
+VERSION = "3.9.11.17"
 
 def set_cursor_pos(x, y):
     win32api.SetCursorPos((x, y))
