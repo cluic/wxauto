@@ -387,6 +387,7 @@ wx.AddListenChat
 > 注：微信有一定的限制，如果频繁添加好友，可能会被限制添加好友的权限，所以请谨慎使用！！！
 
 
+
 ## 四、其他
 
 ### 1. savepic保存图片默认路径设置
@@ -398,6 +399,17 @@ from wxauto.elements import WxParam
 WxParam.DEFALUT_IMAGE_SAVEPATH = r"D:\AAA\BBB"
 ```
 
+### 2. 引用消息进行回复
+
+```python
+>>> msgs = wx.GetAllMessage()
+>>> msg = msgs[-1]  # 获取最后一条消息
+>>> msg.quote('收到！')
+```
+
+> 1. 请确保消息类型为 friend 或 self 类型
+>
+> 2. 监听消息同理
 
 ## 五、使用案例
 
