@@ -93,7 +93,69 @@ class WeChat(WeChatBase):
         self.UiaAPI.SendKeys('{Ctrl}{Alt}w')
         self.UiaAPI.SendKeys('{Ctrl}{Alt}w')
         self._show()
+
+    def _get_friend_details(self):
+        params = ['昵称：', '微信号：', '地区：', '备注', '电话', '标签', '共同群聊', '个性签名', '来源', '朋友权限', '描述', '实名', '企业']
+        info = {}
+        controls = GetAllControlList(self.ChatBox)
+        for _, i in enumerate(controls):
+            rect = i.BoundingRectangle
+            text = i.Name
+            if text in params or (rect.width() == 57 and rect.height() == 20):
+                info[text.replace('：', '')] = controls[_+1].Name
+        if '昵称' not in info:
+            info['备注'] = ''
+            info['昵称'] = controls[0].Name
+        wxlog.debug(f'获取到好友详情：{info}')
+        return info
     
+    def _goto_first_friend(self):
+        def find_letter_tag(self):
+            items = self.SessionBox.ListControl().GetChildren()
+            for index, item in enumerate(items[:-1]):
+                if item.TextControl(RegexName='^[A-Z]$').Exists(0):
+                    # print('>>> bingo!\n')
+                    # GetAllControl(item)
+                    return items[index+1]
+        while True:
+            item = find_letter_tag(self)
+            if item is not None:
+                self.SessionBox.WheelDown(wheelTimes=3)
+                item.Click(simulateMove=False)
+                break
+            self.SessionBox.WheelDown(wheelTimes=3, interval=0)
+
+    def GetFriendDetails(self, n=None, timeout=0xFFFFF):
+        """获取所有好友详情信息
+        
+        Args:
+            n (int, optional): 获取前n个好友详情信息, 默认为None，获取所有好友详情信息
+            timeout (int, optional): 获取超时时间（秒），超过该时间则直接返回结果
+
+        Returns:
+            list: 所有好友详情信息
+            
+        注：1. 该方法运行时间较长，约0.5~1秒一个好友的速度，好友多的话可将n设置为一个较小的值，先测试一下
+            2. 如果遇到企业微信的好友且为已离职状态，可能导致微信卡死，需重启（此为微信客户端BUG）
+            3. 该方法未经过大量测试，可能存在未知问题，如有问题请微信群内反馈
+        """
+        t0 = time.time()
+        self.SwitchToContact()
+        self._goto_first_friend()
+        details = []
+        while True:
+            if time.time() - t0 > timeout:
+                wxlog.debug('获取好友详情超时，返回结果')
+                return details
+            _detail = self._get_friend_details()
+            if details and _detail == details[-1]:
+                return details
+            details.append(_detail)
+            self.SessionBox.SendKeys('{DOWN}')
+            if n and len(details) >= n:
+                return details
+
+            
     def GetSessionAmont(self, SessionItem):
         """获取聊天对象名和新消息条数
         
@@ -167,23 +229,9 @@ class WeChat(WeChatBase):
                 self.usedmsgid = [i[-1] for i in msgs_]
                 return {session:msgs}
         else:
-            # wxlog.debug('没有新消息')
+            wxlog.debug('没有新消息')
             return {}
     
-    # def GetAllNewMessage(self):
-    #     """获取所有新消息"""
-    #     newmessages = {}
-    #     while True:
-    #         if self.CheckNewMessage():
-    #             self.A_ChatIcon.DoubleClick(simulateMove=False)
-    #             sessiondict = self.GetSessionList(newmessage=True)
-    #             for session in sessiondict:
-    #                 self.ChatWith(session)
-    #                 newmessages[session] = self.GetAllMessage()[-sessiondict[session]:]
-    #         else:
-    #             break
-    #     # self.ChatWith(self._lang('文件传输助手'))
-    #     return newmessages
     def GetAllNewMessage(self, max_round=10):
         """获取所有新消息
         
@@ -521,18 +569,27 @@ class WeChat(WeChatBase):
         exists = uia.WindowControl(searchDepth=1, ClassName='ChatWnd', Name=who).Exists(maxSearchSeconds=0.1)
         if not exists:
             self.ChatWith(who)
-            self.SessionBox.ListItemControl(Name=who).DoubleClick(simulateMove=False)
+            self.SessionBox.ListItemControl(RegexName=who).DoubleClick(simulateMove=False)
         self.listen[who] = ChatWnd(who, self.language)
         self.listen[who].savepic = savepic
 
-    def GetListenMessage(self):
-        """获取监听对象的新消息"""
+    def GetListenMessage(self, who=None):
+        """获取监听对象的新消息
+        
+        Args:
+            who (str, optional): 要获取消息的聊天对象名，如果为None，则获取所有监听对象的消息
+
+        Returns:
+            str|dict: 如果
+        """
+        if who and who in self.listen:
+            chat = self.listen[who]
+            msg = chat.GetNewMessage(savepic=chat.savepic)
+            return msg
         msgs = {}
         for who in self.listen:
             chat = self.listen[who]
-            # chat._show()
             msg = chat.GetNewMessage(savepic=chat.savepic)
-            # if [i for i in msg if i[0] != 'Self']:
             if msg:
                 msgs[chat] = msg
         return msgs

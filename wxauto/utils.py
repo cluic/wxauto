@@ -93,7 +93,7 @@ def SetClipboardText(text: str):
 try:
     from anytree import Node, RenderTree
 
-    def GetAllControl(ele):
+    def PrintAllControlTree(ele):
         def findall(ele, n=0, node=None):
             nn = '\n'
             nodename = f"[{ele.ControlTypeName} {n}](\"{ele.ClassName}\", \"{ele.Name.replace(nn, '')}\", \"{''.join([str(i) for i in ele.GetRuntimeId()])}\")"
@@ -110,6 +110,17 @@ try:
             print(f"{pre}{node.name}")
 except:
     pass
+
+def GetAllControlList(ele):
+    def findall(ele, n=0, text=[]):
+        if ele.Name:
+            text.append(ele)
+        eles = ele.GetChildren()
+        for ele1 in eles:
+            text = findall(ele1, n+1, text)
+        return text
+    text_list = findall(ele)
+    return text_list
 
 def SetClipboardFiles(paths):
     for file in paths:
