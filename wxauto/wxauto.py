@@ -1,7 +1,7 @@
 """
 Author: Cluic
-Update: 2024-05-19
-Version: 3.9.8.15.8
+Update: 2024-06-22
+Version: 3.9.11.17.1
 """
 
 from . import uiautomation as uia
@@ -19,7 +19,7 @@ except:
     from typing_extensions import Literal
 
 class WeChat(WeChatBase):
-    VERSION: str = '3.9.8.15'
+    VERSION: str = '3.9.11.17'
     lastmsgid: str = None
     listen: dict = dict()
     SessionItemList: list = []
