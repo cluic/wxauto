@@ -339,7 +339,7 @@ wx.AddListenChat
 #### 14.2 获取详细信息
 
 ```python
->>> wx.GetAllFriendsDetail()
+>>> wx.GetFriendDetails()
 [{'微信号：': 'abc123456',
   '地区：': '上海 浦东新区',
   '备注': '',
