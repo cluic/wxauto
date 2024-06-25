@@ -22,6 +22,7 @@ import ctypes
 import ctypes.wintypes
 import comtypes #need pip install comtypes
 import comtypes.client
+from PIL import ImageGrab
 from typing import (Any, Callable, Dict, List, Iterable, Tuple)  # need pip install typing for Python3.4 or lower
 TreeNode = Any
 
@@ -5458,6 +5459,20 @@ class Control():
         """
         rect = self.Element.CurrentBoundingRectangle
         return Rect(rect.left, rect.top, rect.right, rect.bottom)
+    
+    def ScreenShot(self, savePath: str=None) -> str:
+        """
+        Save the control's screenshot to savePath.
+        savePath: str, the path to save the screenshot.
+        Return str, the path of the saved screenshot.
+        """
+        rect = self.Element.CurrentBoundingRectangle
+        bbox = (rect.left, rect.top, rect.right, rect.bottom)
+        img = ImageGrab.grab(bbox=bbox, all_screens=True)
+        if savePath is None:
+            savePath = os.path.join(os.getcwd(), 'ControlScreenShot.png')
+        img.save(savePath)
+        return savePath
 
     @property
     def ClassName(self) -> str:

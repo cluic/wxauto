@@ -64,7 +64,8 @@ class WeChatBase:
     def _getmsgs(self, msgitems, savepic=False, savefile=False, savevoice=False):
         msgs = []
         for MsgItem in msgitems:
-            msgs.append(self._split(MsgItem))
+            if MsgItem.ControlTypeName == 'ListItemControl':
+                msgs.append(self._split(MsgItem))
 
         msgtypes = [
             f"[{self._lang('图片')}]",
@@ -854,3 +855,42 @@ message_types = {
 
 def ParseMessage(data, control, wx):
     return message_types.get(data[0], FriendMessage)(data, control, wx)
+
+
+class LoginWnd:
+    _class_name = 'WeChatLoginWndForPC'
+    UiaAPI = uia.PaneControl(ClassName=_class_name, searchDepth=1)
+
+    def __repr__(self) -> str:
+        return f"<wxauto LoginWnd Object at {hex(id(self))}>"
+
+    def _show(self):
+        self.HWND = FindWindow(classname=self._class_name)
+        win32gui.ShowWindow(self.HWND, 1)
+        win32gui.SetWindowPos(self.HWND, -1, 0, 0, 0, 0, 3)
+        win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
+        self.UiaAPI.SwitchToThisWindow()
+
+    @property
+    def _app_path(self):
+        HWND = FindWindow(classname=self._class_name)
+        return GetPathByHwnd(HWND)
+
+    def login(self):
+        enter_button = self.UiaAPI.ButtonControl(Name='进入微信')
+        if enter_button.Exists():
+            enter_button.Click(simulateMove=False)
+
+    def get_qrcode(self):
+        """获取登录二维码
+        
+        Returns:
+            str: 二维码图片的保存路径
+        """
+        switch_account_button = self.UiaAPI.ButtonControl(Name='切换账号')
+        if switch_account_button.Exists():
+            switch_account_button.Click(simulateMove=False)
+        self._show()
+        qrcode_control = self.UiaAPI.ButtonControl(Name='二维码')
+        qrcode = qrcode_control.ScreenShot()
+        return qrcode
