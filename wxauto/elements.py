@@ -335,8 +335,8 @@ class ChatWnd(WeChatBase):
             return []
         newmsgs = self._getmsgs(NewMsgItems, savepic, savefile, savevoice)
         self.usedmsgid = [i[-1] for i in self._getmsgs(MsgItems)]
-        if newmsgs[0].type == 'sys' and newmsgs[0].content == self._lang('查看更多消息'):
-            newmsgs = newmsgs[1:]
+        # if newmsgs[0].type == 'sys' and newmsgs[0].content == self._lang('查看更多消息'):
+        #     newmsgs = newmsgs[1:]
         return newmsgs
 
     
