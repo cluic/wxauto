@@ -1,4 +1,4 @@
-![wxauto](https://github.com/cluic/wxauto/blob/WeChat3.9.11/utils/wxauto_full.png)
+[![wxauto](https://github.com/cluic/wxauto/blob/WeChat3.9.11/utils/wxauto.png)](https://wxauto.loux.cc)
 # wxauto  (适用PC微信3.9.11.17版本）
 
 ### 欢迎指出bug，欢迎pull requests
