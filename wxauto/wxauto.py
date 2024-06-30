@@ -559,7 +559,7 @@ class WeChat(WeChatBase):
         wxlog.debug(f'获取到 {len(AcceptableNewFriendsList)} 条新的好友申请')
         return AcceptableNewFriendsList
     
-    def AddListenChat(self, who, savepic=False):
+    def AddListenChat(self, who, savepic=False, savefile=False, savevoice=False):
         """添加监听对象
         
         Args:
@@ -572,6 +572,8 @@ class WeChat(WeChatBase):
             self.SessionBox.ListItemControl(RegexName=who).DoubleClick(simulateMove=False)
         self.listen[who] = ChatWnd(who, self.language)
         self.listen[who].savepic = savepic
+        self.listen[who].savefile = savefile
+        self.listen[who].savevoice = savevoice
 
     def GetListenMessage(self, who=None):
         """获取监听对象的新消息
@@ -584,12 +586,12 @@ class WeChat(WeChatBase):
         """
         if who and who in self.listen:
             chat = self.listen[who]
-            msg = chat.GetNewMessage(savepic=chat.savepic)
+            msg = chat.GetNewMessage(savepic=chat.savepic, savefile=chat.savefile, savevoice=chat.savevoice)
             return msg
         msgs = {}
         for who in self.listen:
             chat = self.listen[who]
-            msg = chat.GetNewMessage(savepic=chat.savepic)
+            msg = chat.GetNewMessage(savepic=chat.savepic, savefile=chat.savefile, savevoice=chat.savevoice)
             if msg:
                 msgs[chat] = msg
         return msgs
