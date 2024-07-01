@@ -5947,7 +5947,7 @@ class Control():
             controls = progeny[depth]
             if control_type:
                 controls = [child for child in controls if child.ControlTypeName == control_type]
-            if index < len(progeny):
+            if index < len(controls):
                 return controls[index]
         except IndexError:
             return
