@@ -23,7 +23,6 @@ class WeChat(WeChatBase):
     lastmsgid: str = None
     listen: dict = dict()
     SessionItemList: list = []
-    UiaAPI: uia.WindowControl = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
 
     def __init__(
             self, 
@@ -35,6 +34,7 @@ class WeChat(WeChatBase):
         Args:
             language (str, optional): 微信客户端语言版本, 可选: cn简体中文  cn_t繁体中文  en英文, 默认cn, 即简体中文
         """
+        self.UiaAPI: uia.WindowControl = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
         set_debug(debug)
         self.language = language
         # self._checkversion()
