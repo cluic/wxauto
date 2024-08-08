@@ -2,6 +2,7 @@ from . import uiautomation as uia
 from .languages import *
 from .utils import *
 from .color import *
+from .errors import *
 import datetime
 import time
 import os
@@ -789,6 +790,62 @@ class SelfMessage(Message):
         editbox.SendKeys('{Enter}')
         return True
     
+    def forward(self, friend):
+        """转发该消息
+        
+        Args:
+            friend (str): 转发给的好友昵称、备注或微信号
+        
+        Returns:
+            bool: 是否成功转发
+        """
+        wxlog.debug(f'转发消息：{self.sender} --> {friend} | {self.content}')
+        self._winobj._show()
+        headcontrol = [i for i in self.control.GetFirstChildControl().GetChildren() if i.ControlTypeName == 'ButtonControl'][0]
+        RollIntoView(self.chatbox.ListControl(), headcontrol, equal=True)
+        xbias = int(headcontrol.BoundingRectangle.width()*1.5)
+        headcontrol.RightClick(x=-xbias, simulateMove=False)
+        menu = self._winobj.UiaAPI.MenuControl(ClassName='CMenuWnd')
+        forward_option = menu.MenuItemControl(Name="转发...")
+        if not forward_option.Exists(maxSearchSeconds=0.1):
+            wxlog.debug('该消息当前状态无法转发')
+            return False
+        forward_option.Click(simulateMove=False)
+        SetClipboardText(friend)
+        contactwnd = self._winobj.UiaAPI.WindowControl(ClassName='SelectContactWnd')
+        contactwnd.SendKeys('{Ctrl}a', waitTime=0)
+        contactwnd.SendKeys('{Ctrl}v')
+        checkbox = contactwnd.ListControl().CheckBoxControl()
+        if checkbox.Exists(1):
+            checkbox.Click(simulateMove=False)
+            contactwnd.ButtonControl(Name='发送').Click(simulateMove=False)
+            return True
+        else:
+            contactwnd.SendKeys('{Esc}')
+            raise FriendNotFoundError(f'未找到好友：{friend}')
+    
+    def parse(self):
+        """解析合并消息内容，当且仅当消息内容为合并转发的消息时有效"""
+        wxlog.debug(f'解析合并消息内容：{self.sender} | {self.content}')
+        self._winobj._show()
+        headcontrol = [i for i in self.control.GetFirstChildControl().GetChildren() if i.ControlTypeName == 'ButtonControl'][0]
+        RollIntoView(self.chatbox.ListControl(), headcontrol, equal=True)
+        xbias = int(headcontrol.BoundingRectangle.width()*1.5)
+        headcontrol.Click(x=-xbias, simulateMove=False)
+        chatrecordwnd = uia.WindowControl(ClassName='ChatRecordWnd', searchDepth=1)
+        msgitems = chatrecordwnd.ListControl().GetChildren()
+        msgs = []
+        for msgitem in msgitems:
+            textcontrols = [i for i in GetAllControl(msgitem) if i.ControlTypeName == 'TextControl']
+            who = textcontrols[0].Name
+            time = textcontrols[1].Name
+            try:
+                content = textcontrols[2].Name
+            except IndexError:
+                content = ''
+            msgs.append(([who, content, ParseWeChatTime(time)]))
+        chatrecordwnd.SendKeys('{Esc}')
+        return msgs
 
 class FriendMessage(Message):
     type = 'friend'
@@ -843,6 +900,63 @@ class FriendMessage(Message):
                 break
         editbox.SendKeys('{Enter}')
         return True
+    
+    def forward(self, friend):
+        """转发该消息
+        
+        Args:
+            friend (str): 转发给的好友昵称、备注或微信号
+        
+        Returns:
+            bool: 是否成功转发
+        """
+        wxlog.debug(f'转发消息：{self.sender} --> {friend} | {self.content}')
+        self._winobj._show()
+        headcontrol = [i for i in self.control.GetFirstChildControl().GetChildren() if i.ControlTypeName == 'ButtonControl'][0]
+        RollIntoView(self.chatbox.ListControl(), headcontrol, equal=True)
+        xbias = int(headcontrol.BoundingRectangle.width()*1.5)
+        headcontrol.RightClick(x=xbias, simulateMove=False)
+        menu = self._winobj.UiaAPI.MenuControl(ClassName='CMenuWnd')
+        forward_option = menu.MenuItemControl(Name="转发...")
+        if not forward_option.Exists(maxSearchSeconds=0.1):
+            wxlog.debug('该消息当前状态无法转发')
+            return False
+        forward_option.Click(simulateMove=False)
+        SetClipboardText(friend)
+        contactwnd = self._winobj.UiaAPI.WindowControl(ClassName='SelectContactWnd')
+        contactwnd.SendKeys('{Ctrl}a', waitTime=0)
+        contactwnd.SendKeys('{Ctrl}v')
+        checkbox = contactwnd.ListControl().CheckBoxControl()
+        if checkbox.Exists(1):
+            checkbox.Click(simulateMove=False)
+            contactwnd.ButtonControl(Name='发送').Click(simulateMove=False)
+            return True
+        else:
+            contactwnd.SendKeys('{Esc}')
+            raise FriendNotFoundError(f'未找到好友：{friend}')
+    
+    def parse(self):
+        """解析合并消息内容，当且仅当消息内容为合并转发的消息时有效"""
+        wxlog.debug(f'解析合并消息内容：{self.sender} | {self.content}')
+        self._winobj._show()
+        headcontrol = [i for i in self.control.GetFirstChildControl().GetChildren() if i.ControlTypeName == 'ButtonControl'][0]
+        RollIntoView(self.chatbox.ListControl(), headcontrol, equal=True)
+        xbias = int(headcontrol.BoundingRectangle.width()*1.5)
+        headcontrol.Click(x=xbias, simulateMove=False)
+        chatrecordwnd = uia.WindowControl(ClassName='ChatRecordWnd', searchDepth=1)
+        msgitems = chatrecordwnd.ListControl().GetChildren()
+        msgs = []
+        for msgitem in msgitems:
+            textcontrols = [i for i in GetAllControl(msgitem) if i.ControlTypeName == 'TextControl']
+            who = textcontrols[0].Name
+            time = textcontrols[1].Name
+            try:
+                content = textcontrols[2].Name
+            except IndexError:
+                content = ''
+            msgs.append(([who, content, ParseWeChatTime(time)]))
+        chatrecordwnd.SendKeys('{Esc}')
+        return msgs
 
 
 

@@ -122,6 +122,17 @@ def GetAllControlList(ele):
     text_list = findall(ele)
     return text_list
 
+def GetAllControl(ele):
+    def findall(ele, n=0, controls=[]):
+        # if ele.Name:
+        controls.append(ele)
+        eles = ele.GetChildren()
+        for ele1 in eles:
+            controls = findall(ele1, n+1, controls)
+        return controls
+    text_list = findall(ele)[1:]
+    return text_list
+
 def SetClipboardFiles(paths):
     for file in paths:
         if not os.path.exists(file):
@@ -249,17 +260,23 @@ def ParseWeChatTime(time_str):
     Returns:
         转换后的时间字符串
     """
-
+    
+    match = re.match(r'^(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$', time_str)
+    if match:
+        month, day, hour, minute, second = match.groups()
+        current_year = datetime.now().year
+        return datetime(current_year, int(month), int(day), int(hour), int(minute), int(second)).strftime('%Y-%m-%d %H:%M:%S')
+    
     match = re.match(r'^(\d{1,2}):(\d{1,2})$', time_str)
     if match:
         hour, minute = match.groups()
-        return datetime.now().strftime('%Y-%m-%d') + f' {hour}:{minute}'
+        return datetime.now().strftime('%Y-%m-%d') + f' {hour}:{minute}:00'
 
     match = re.match(r'^昨天 (\d{1,2}):(\d{1,2})$', time_str)
     if match:
         hour, minute = match.groups()
         yesterday = datetime.now() - timedelta(days=1)
-        return yesterday.strftime('%Y-%m-%d') + f' {hour}:{minute}'
+        return yesterday.strftime('%Y-%m-%d') + f' {hour}:{minute}:00'
 
     match = re.match(r'^星期([一二三四五六日]) (\d{1,2}):(\d{1,2})$', time_str)
     if match:
@@ -268,12 +285,12 @@ def ParseWeChatTime(time_str):
         today_weekday = datetime.now().weekday()
         delta_days = (today_weekday - weekday_num) % 7
         target_day = datetime.now() - timedelta(days=delta_days)
-        return target_day.strftime('%Y-%m-%d') + f' {hour}:{minute}'
+        return target_day.strftime('%Y-%m-%d') + f' {hour}:{minute}:00'
 
     match = re.match(r'^(\d{4})年(\d{1,2})月(\d{1,2})日 (\d{1,2}):(\d{1,2})$', time_str)
     if match:
         year, month, day, hour, minute = match.groups()
-        return datetime(*[int(i) for i in [year, month, day, hour, minute]]).strftime('%Y-%m-%d') + f' {hour}:{minute}'
+        return datetime(*[int(i) for i in [year, month, day, hour, minute]]).strftime('%Y-%m-%d %H:%M:%S')
 
 
 def RollIntoView(win, ele, equal=False):
