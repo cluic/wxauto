@@ -76,16 +76,15 @@ msgs = wx.GetAllMessage(savepic=True)   # 获取聊天记录，及自动下载�
 ## 注意事项
 目前还在开发中，测试案例较少，使用过程中可能遇到各种Bug
 
-如果遇到问题或者有新的想法，希望您可以通过以下两种方式联系我进行改进：
-- 微信：louxinghao（请备注wxauto，加群请备注加入交流群，合作、定制请备注合作）
-- ![微信](https://github.com/cluic/wxauto/blob/WeChat3.9.8/utils/wxqrcode.png)
+## 交流
 
+[微信交流群](https://wxauto.loux.cc/docs/intro#-%E4%BA%A4%E6%B5%81)
 
 ## 最后
 如果对您有帮助，希望可以帮忙点个Star，如果您正在使用这个项目，可以将右上角的 Unwatch 点为 Watching，以便在我更新或修复某些 Bug 后即使收到反馈，感谢您的支持，非常感谢！
 
 ## 免责声明
-代码仅供交流学习使用，请勿用于非法用途和商业用途！如因此产生任何法律纠纷，均与作者无关！
+代码仅用于对UIAutomation技术的交流学习使用，禁止用于实际生产项目，请勿用于非法用途和商业用途！如因此产生任何法律纠纷，均与作者无关！
 
 
 
