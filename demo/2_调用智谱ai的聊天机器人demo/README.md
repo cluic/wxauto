@@ -9,4 +9,4 @@ pip install zhipuai==1.0.7 -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ### 运行
 
-1. 登录微信 2.运行 wxbot.py
+1.登录微信   2.运行 wxbot.py
