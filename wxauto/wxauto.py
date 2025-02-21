@@ -487,7 +487,61 @@ class WeChat(WeChatBase):
         else:
             Warnings.lightred('所有文件都无法成功发送', stacklevel=2)
             return False
-            
+
+    def VideoCall(self, who=None):
+        """打开视频聊天
+                Args:
+                    who (str): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
+                Returns:
+                    False失败；True 成功
+                """
+        return self.__openCall(who=who, type=1)
+
+    def VoiceCall(self, who=None):
+        """打开语音聊天
+                        Args:
+                            who (str): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
+                        Returns:
+                            False失败；True 成功
+                        """
+        return self.__openCall(who=who, type=2)
+
+    def __openCall(self, who=None, type=1):
+        """打开（语音|视频）聊天
+        Args:
+            who (str): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
+            type (int): 视频聊天=1；语音聊天=2
+        Returns:
+            False失败；True 成功
+        """
+        if who:
+            try:
+                editbox = self.ChatBox.EditControl(searchDepth=10)
+                if who in self.CurrentChat() and who in editbox.Name:
+                    pass
+                else:
+                    self.SwitchToChat()
+                    self.ChatWith(who)
+            except:
+                self.SwitchToChat()
+                self.ChatWith(who)
+        else:
+            Warnings.lightred('用户不能为空', stacklevel=2)
+            return False
+        if type == 1:
+            ele = self.ChatBox.PaneControl(searchDepth=8, foundIndex=1).ButtonControl(Name='视频聊天')
+        else:
+            ele = self.ChatBox.PaneControl(searchDepth=8, foundIndex=2).ButtonControl(Name='语音聊天')
+        try:
+            uia.SetGlobalSearchTimeout(1)
+            rect = ele.BoundingRectangle
+            Click(rect)
+            return True
+        except:
+            return False
+        finally:
+            uia.SetGlobalSearchTimeout(10)
+
     def GetAllMessage(self, savepic=False, savefile=False, savevoice=False):
         '''获取当前窗口中加载的所有聊天记录
         
