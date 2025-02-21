@@ -25,7 +25,8 @@ class WeChat(WeChatBase):
     SessionItemList: list = []
 
     def __init__(
-            self, 
+            self,
+            uia_api = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1),
             language: Literal['cn', 'cn_t', 'en'] = 'cn', 
             debug: bool = False
         ) -> None:
@@ -34,7 +35,7 @@ class WeChat(WeChatBase):
         Args:
             language (str, optional): 微信客户端语言版本, 可选: cn简体中文  cn_t繁体中文  en英文, 默认cn, 即简体中文
         """
-        self.UiaAPI: uia.WindowControl = uia.WindowControl(ClassName='WeChatMainWndForPC', searchDepth=1)
+        self.UiaAPI: uia.WindowControl = uia_api
         set_debug(debug)
         self.language = language
         # self._checkversion()
@@ -372,8 +373,8 @@ class WeChat(WeChatBase):
             else:
                 editbox.SendKeys('{Enter}')
 
-    def SendMsg(self, msg, who=None, clear=True, at=None):
-        """发送文本消息
+    def InputMsg(self, msg, who=None, clear=True, at=None):
+        """输入文本消息，不发送
 
         Args:
             msg (str): 要发送的文本消息
@@ -426,6 +427,18 @@ class WeChat(WeChatBase):
                 editbox.SendKeys('{Ctrl}v')
                 if editbox.GetValuePattern().Value:
                     break
+
+        return editbox
+
+    def SendMsg(self, msg, who=None, clear=True, at=None):
+        """发送文本消息
+        Args:
+            msg (str): 要发送的文本消息
+            who (str): 要发送给谁，如果为None，则发送到当前聊天页面。  *最好完整匹配，优先使用备注
+            clear (bool, optional): 是否清除原本的内容，
+            at (str|list, optional): 要@的人，可以是一个人或多个人，格式为str或list，例如："张三"或["张三", "李四"]
+        """
+        editbox =  self.InputMsg(msg, who, clear, at)
         editbox.SendKeys('{Enter}')
         
     def SendFiles(self, filepath, who=None):
