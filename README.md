@@ -1,4 +1,4 @@
-[![wxauto](https://github.com/cluic/wxauto/blob/WeChat3.9.11/utils/wxauto.png)](https://wxauto.loux.cc)
+[![wxauto](https://github.com/cluic/wxauto/blob/WeChat3.9.11/utils/wxauto.png)](https://docs.wxauto.org)
 # wxauto  (适用PC微信3.9.11.17版本）
 
 ### 欢迎指出bug，欢迎pull requests
@@ -9,8 +9,8 @@ Windows版本微信客户端自动化，可实现简单的发送、接收微信�
 [点击下载](https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.9.11.17/WeChatSetup-3.9.11.17.exe)
 
 **文档**：
-[使用文档](https://wxauto.loux.cc/docs/intro) |
-[云服务器wxauto部署指南](https://wxauto.loux.cc/docs/advanced/deploy)
+[使用文档](https://docs.wxauto.org) |
+[云服务器wxauto部署指南](https://docs.wxauto.org/other/deploy)
 
 |  环境  | 版本 |
 | :----: | :--: |
@@ -39,7 +39,7 @@ python窗口：
 
 ## 示例
 > [!NOTE]
-> 如有问题请先查看[使用文档](https://wxauto.loux.cc/docs/intro)
+> 如有问题请先查看[使用文档](https://docs.wxauto.org)
 
 **请先登录PC微信客户端**
 
