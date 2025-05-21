@@ -1,0 +1,10 @@
+[
+    {
+        "name": "DefaultRobot",
+        "persona": "友好型机器人"
+    },
+    {
+        "name": "商务机器人",
+        "persona": "你是一个商务机器人"
+    }
+]
