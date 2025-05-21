@@ -1,5 +1,19 @@
+# requirements.txt
+
+# 基础库
+json
+threading
+time
+tkinter
+pypinyin
+psutil
+pyperclip
+
+# 第三方库
+wxauto
 uiautomation
 Pillow
 pywin32
-psutil
-pyperclip
+openai
+
+# 如果有其他依赖的包，也可以在这里添加
