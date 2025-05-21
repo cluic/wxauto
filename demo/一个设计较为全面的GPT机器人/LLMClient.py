@@ -3,9 +3,9 @@ from openai import OpenAI
 
 class LLMClient:
     def __init__(self):
-        self.api_key = "sk-2505ce4643044eaab9a653a1f58752bb"
-        self.base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        self.model_name = "qwen-plus"
+        self.api_key = "your_api_key"
+        self.base_url = "your_model_url"
+        self.model_name = "model_name"
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
 
     def generate_response(self, messages):
