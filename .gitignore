@@ -1,0 +1,7 @@
+wxauto_logs
+wxauto文件下载
+msgs.txt
+__pycache__/
+*.ipynb
+*.bat
+@AutomationLog.txt
