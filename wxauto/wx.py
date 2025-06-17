@@ -329,3 +329,13 @@ class WeChat(Chat, Listener):
             List[Chat]: 所有子窗口实例
         """
         return [Chat(subwin) for subwin in self._api.get_all_sub_wnds()]
+    
+    def KeepRunning(self):
+        """保持运行"""
+        while not self._listener_stop_event.is_set():
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                wxlog.debug(f'wxauto("{self.nickname}") shutdown')
+                self.StopListening(True)
+                break
