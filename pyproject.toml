@@ -1,6 +1,6 @@
 [project]
 name = "wxauto"
-version = "39.1.1"
+version = "39.1.2"
 description = "wxauto 3.9 V2 version"
 authors = [
     {name = "Cluic", email = "tikic@qq.com"}
@@ -17,19 +17,9 @@ dependencies = [
     "comtypes"
 ]
 
-[project.scripts]
-wxauto = "wxauto.__main__:main"
-
-[tool.poetry]
-name = "wxauto"
-version = "3.9.2.1"
-description = "wxauto V2 version"
-authors = ["Cluic"]
-readme = "README.md"
+[tool.setuptools.packages.find]
+include = ["wxauto*"]
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.setuptools.commands.bdist_wheel]
-python-tag = "cp312"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

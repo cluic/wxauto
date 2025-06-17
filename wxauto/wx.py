@@ -185,6 +185,7 @@ class WeChat(Chat, Listener):
             wxlog.set_debug(True)
             wxlog.debug('Debug mode is on')
         self._listener_start()
+        self.Show()
 
     def _get_listen_messages(self):
         temp_listen = self.listen.copy()
