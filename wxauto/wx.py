@@ -195,7 +195,7 @@ class WeChat(Chat, Listener):
             try:
                 if chat is None or not chat.core.exists():
                     wxlog.debug(f"窗口 {who} 已关闭，移除监听")
-                    self.RemoveListenChat(who, False)
+                    self.RemoveListenChat(who, close_window=False)
                     continue
             except:
                 continue
