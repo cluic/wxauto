@@ -6,7 +6,7 @@ authors = [
     {name = "Cluic", email = "tikic@qq.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.8,<3.13"
 dependencies = [
     "tenacity",
     "pywin32",
