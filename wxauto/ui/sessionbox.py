@@ -150,9 +150,12 @@ class SessionBox:
             if session.name == name:
                 wxlog.debug(f"找到会话: {name}")
                 while session.control.BoundingRectangle.height():
-                    session.click()
-                    session.double_click()
-                    time.sleep(0.5)
+                    try:
+                        session.click()
+                        session.double_click()
+                    except:
+                        pass
+                    time.sleep(0.1)
                 else:
                     return WxResponse.success(data={'nickname': name})
         wxlog.debug(f"未找到会话: {name}")
@@ -232,6 +235,7 @@ class SessionElement:
 
 
     def _click(self, right: bool=False, double: bool=False):
+        self._show()
         self.roll_into_view()
         if right:
             self.control.RightClick()

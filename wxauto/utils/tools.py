@@ -75,7 +75,7 @@ def roll_into_view(win, ele, equal=False, bias=0):
         if ele.BoundingRectangle.ycenter() < win.BoundingRectangle.top + bias:
             # 上滚动
             while True:
-                if not ele.Exists(0):
+                if not ele.Exists(0) or not ele.BoundingRectangle.height():
                     return 'not exist'
                 win.WheelUp(wheelTimes=1)
                 time.sleep(0.1)
@@ -89,7 +89,7 @@ def roll_into_view(win, ele, equal=False, bias=0):
         elif ele.BoundingRectangle.ycenter() >= win.BoundingRectangle.bottom - bias:
             # 下滚动
             while True:
-                if not ele.Exists(0):
+                if not ele.Exists(0) or not ele.BoundingRectangle.height():
                     return 'not exist'
                 win.WheelDown(wheelTimes=1)
                 time.sleep(0.1)
