@@ -84,7 +84,6 @@ class Chat:
         """
         return self.core.chatbox.get_info()
     
-
     def SendMsg(
             self, 
             msg: str,
