@@ -152,7 +152,7 @@ class SessionBox:
                 while session.control.BoundingRectangle.height():
                     session.click()
                     session.double_click()
-                    time.sleep(0.1)
+                    time.sleep(0.5)
                 else:
                     return WxResponse.success(data={'nickname': name})
         wxlog.debug(f"未找到会话: {name}")
