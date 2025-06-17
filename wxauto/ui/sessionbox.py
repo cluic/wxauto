@@ -231,11 +231,11 @@ class SessionElement:
         return self.parent._lang(text)
     
     def roll_into_view(self):
+        self._show()
         roll_into_view(self.control.GetParentControl(), self.control)
 
 
     def _click(self, right: bool=False, double: bool=False):
-        self._show()
         self.roll_into_view()
         if right:
             self.control.RightClick()
