@@ -79,6 +79,7 @@ class ChatBox(BaseUISubWnd):
         return USED_MSG_IDS[self.id]
     
     def get_info(self):
+        self._show()
         chat_info = {}
         walk = uia.WalkControl(self.control)
         for chat_name_control, depth in walk:
@@ -121,6 +122,7 @@ class ChatBox(BaseUISubWnd):
     
 
     def input_at(self, at_list):
+        self._show()
         if isinstance(at_list, str):
             at_list = [at_list]
         self._activate_editbox()
@@ -181,6 +183,7 @@ class ChatBox(BaseUISubWnd):
 
 
     def send_file(self, file_path):
+        self._show()
         if isinstance(file_path, str):
             file_path = [file_path]
         file_path = [os.path.abspath(f) for f in file_path]
@@ -190,6 +193,7 @@ class ChatBox(BaseUISubWnd):
         self.sendbtn.Click()
     
     def load_more(self, interval=0.3):
+        self._show()
         msg_len = len(self.msgbox.GetChildren())
         loadmore = self.msgbox.GetChildren()[0]
         loadmore_top = loadmore.BoundingRectangle.top
@@ -298,6 +302,7 @@ class ChatBox(BaseUISubWnd):
         # 2. 判断是否有新消息按钮，有的话点一下
         load_new_button = self.control.ButtonControl(RegexName=self._lang('re_新消息按钮'))
         if load_new_button.Exists(0): 
+            self._show()
             wxlog.debug('检测到新消息按钮，点击加载新消息')
             load_new_button.Click()
             time.sleep(0.5)
@@ -331,6 +336,7 @@ class ChatBox(BaseUISubWnd):
             return self._get_tail_after_nth_match(msgs, last_msg, count)
                 
     def get_group_members(self):
+        self._show()
         roominfoWnd = self._open_chat_more_info()
         return roominfoWnd.get_group_members()
 
