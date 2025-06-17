@@ -231,7 +231,7 @@ class SessionElement:
         return self.parent._lang(text)
     
     def roll_into_view(self):
-        self._show()
+        self.root._show()
         roll_into_view(self.control.GetParentControl(), self.control)
 
 
