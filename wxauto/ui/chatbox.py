@@ -138,6 +138,7 @@ class ChatBox(BaseUISubWnd):
 
 
     def send_text(self, content: str):
+        self._show()
         t0 = time.time()
         while True:
             if time.time() - t0 > 10:
