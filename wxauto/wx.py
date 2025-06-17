@@ -19,6 +19,7 @@ from abc import ABC, abstractmethod
 import threading
 import traceback
 import time
+import sys
 
 if TYPE_CHECKING:
     from wxauto.msgs.base import Message
@@ -188,6 +189,7 @@ class WeChat(Chat, Listener):
         self.Show()
 
     def _get_listen_messages(self):
+        sys.stdout.flush()
         temp_listen = self.listen.copy()
         for who in temp_listen:
             chat, callback = temp_listen.get(who, (None, None))
