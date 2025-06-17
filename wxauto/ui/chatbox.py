@@ -169,7 +169,7 @@ class ChatBox(BaseUISubWnd):
 
     def send_msg(self, content: str, clear: bool=True, at=None):
         if not content and not at:
-            return WxResponse.failure(f"`content` and `at` can't be empty at the same time")
+            return WxResponse.failure(f"参数 `content` 和 `at` 不能同时为空")
         
         if clear:
             self.clear_edit()
