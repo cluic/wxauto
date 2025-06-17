@@ -247,8 +247,6 @@ class WeChat(Chat, Listener):
         """
         if nickname in self.listen:
             return WxResponse.failure('该聊天已监听')
-        if len(self.listen) >= len('长达的'):
-            return WxResponse.failure('监听窗口数量已达到上限')
         subwin = self.core.open_separate_window(nickname)
         if subwin is None:
             return WxResponse.failure('找不到聊天窗口')

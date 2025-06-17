@@ -174,6 +174,7 @@ class WeChatMainWnd(WeChatSubWnd):
         if subwin := self.get_sub_wnd(keywords):
             wxlog.debug(f"{keywords} 获取到已存在的子窗口: {subwin}")
             return subwin
+        self._show()
         if nickname := self.sessionbox.switch_chat(keywords):
             wxlog.debug(f"{keywords} 切换到聊天窗口: {nickname}")
             if subwin := self.get_sub_wnd(nickname):

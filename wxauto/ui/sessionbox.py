@@ -61,6 +61,7 @@ class SessionBox:
             force_wait: Union[float, int] = 0.5
         ):
         wxlog.debug(f"切换聊天窗口: {keywords}, {exact}, {force}, {force_wait}")
+        self.root._show()
         sessions = self.get_session()
         for session in sessions:
             if (
