@@ -153,7 +153,7 @@ class ChatBox(BaseUISubWnd):
             self.editbox.SendKeys('{Ctrl}v')
             if self.editbox.GetValuePattern().Value.replace('￼', '').strip():
                 break
-            self.editbox.RightClick(pos='right')
+            self.editbox.RightClick()
             menu = CMenuWnd(self)
             menu.select('粘贴')
             if self.editbox.GetValuePattern().Value.replace('￼', '').strip():
