@@ -304,13 +304,13 @@ class NewFriendElement:
             remarkedit = NewFriendsWnd.TextControl(Name='备注名').GetParentControl().EditControl()
             remarkedit.Click()
             remarkedit.SendKeys('{Ctrl}a')
-            remarkedit.Input(remark)
+            remarkedit.SendKeys(remark)
         
         if tags:
             tagedit = NewFriendsWnd.TextControl(Name='标签').GetParentControl().EditControl()
             for tag in tags:
                 tagedit.Click()
-                tagedit.Input(tag)
+                tagedit.SendKeys(tag)
                 NewFriendsWnd.PaneControl(ClassName='DropdownWindow').TextControl().Click()
 
         if permission == '朋友圈':

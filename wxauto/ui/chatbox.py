@@ -127,7 +127,7 @@ class ChatBox(BaseUISubWnd):
             at_list = [at_list]
         self._activate_editbox()
         for friend in at_list:
-            self.editbox.Input('@'+friend.replace(' ', ''))
+            self.editbox.SendKeys('@'+friend.replace(' ', ''))
             atmenu = AtMenu(self)
             atmenu.select(friend)
 
