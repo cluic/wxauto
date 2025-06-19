@@ -319,7 +319,7 @@ class WeChat(Chat, Listener):
         Returns:
             Chat: 子窗口实例
         """
-        if subwin := self._api.get_sub_wnd(nickname):
+        if subwin := self.core.get_sub_wnd(nickname):
             return Chat(subwin)
         
     def GetAllSubWindow(self) -> List['Chat']:
@@ -328,7 +328,7 @@ class WeChat(Chat, Listener):
         Returns:
             List[Chat]: 所有子窗口实例
         """
-        return [Chat(subwin) for subwin in self._api.get_all_sub_wnds()]
+        return [Chat(subwin) for subwin in self.core.get_all_sub_wnds()]
     
     def KeepRunning(self):
         """保持运行"""
