@@ -37,7 +37,6 @@ class BaseMessage(Message):
             self, 
             control: uia.Control, 
             parent: "ChatBox",
-
         ):
         self.control = control
         self.parent = parent
@@ -62,11 +61,6 @@ class BaseMessage(Message):
     
     def _lang(self, text: str) -> str:
         return MESSAGES.get(text, {WxParam.LANGUAGE: text}).get(WxParam.LANGUAGE)
-    
-    def get_all_text(self) -> str:
-        if self.control.Exists(0):
-            return [text for i in self.control.FindAll() if (text:= i.Name)]
-    
 
     def roll_into_view(self) -> WxResponse:
         if roll_into_view(self.control.GetParentControl(), self.control, equal=True) == 'not exist':
@@ -92,7 +86,6 @@ class HumanMessage(BaseMessage):
             self, 
             control: uia.Control, 
             parent: "ChatBox",
-
         ):
         super().__init__(control, parent)
         self.head_control = self.control.ButtonControl(searchDepth=2)
@@ -103,17 +96,14 @@ class HumanMessage(BaseMessage):
             return WxResponse.failure('消息目标控件不存在，无法滚动至显示窗口')
         return WxResponse.success('成功')
 
-
     def click(self):
         self.roll_into_view()
         self.head_control.Click(x=self._xbias)
-
 
     def right_click(self):
         self.roll_into_view()
         self.head_control.Click(x=-self._xbias)
         self.head_control.RightClick(x=self._xbias)
-
 
     def select_option(self, option: str, timeout=None) -> WxResponse:
         self.root._show()
@@ -135,7 +125,6 @@ class HumanMessage(BaseMessage):
         else:
             return _select_option(self, option)
     
-
     def quote(
             self, text: str, 
             at: Union[List[str], str] = None, 
@@ -160,7 +149,6 @@ class HumanMessage(BaseMessage):
 
         return self.parent.send_text(text)
     
-
     def reply(
             self, text: str, 
             at: Union[List[str], str] = None
@@ -179,7 +167,6 @@ class HumanMessage(BaseMessage):
             self.parent.input_at(at)
 
         return self.parent.send_text(text)
-
 
     def forward(self, targets: Union[List[str], str], timeout: int = 3) -> WxResponse:
         """转发消息
