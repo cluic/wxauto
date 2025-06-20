@@ -19,7 +19,7 @@ class MESSAGE_ATTRS:
     TIME_MSG_CONTROL_NUM = (1,)
     SYS_MSG_CONTROL_NUM = (4,5,6)
     IMG_MSG_CONTROL_NUM = (9, 10, 11, 12)
-    FILE_MSG_CONTROL_NUM = (21, 22, 23, 24)
+    FILE_MSG_CONTROL_NUM = tuple(i for i in range(15, 30))
     VOICE_MSG_CONTROL_NUM = tuple(i for i in range(10, 30))
     VIDEO_MSG_CONTROL_NUM = (13, 14, 15, 16)
 
@@ -32,6 +32,7 @@ SEPICIAL_MSGS = [
         '[图片]',     # ImageMessage
         '[视频]',     # VideoMessage
         '[语音]',     # VoiceMessage
+        '[文件]',     # FileMessage
     ]
 ]
 
@@ -75,8 +76,7 @@ def parse_msg_type(
     ):
     for length, _ in enumerate(uia.WalkControl(control)):length += 1
     content = control.Name
-    msg_rect = control.BoundingRectangle
-    height = msg_rect.height()
+    wxlog.debug(f'content: {content}, length: {length}')
 
     if attr == 'Friend':
         msgtype = friendmsg
