@@ -112,7 +112,7 @@ class VoiceMessage(HumanMessage):
         while True:
             if not self.control.Exists(0):
                 return WxResponse.failure('消息已撤回')
-            text_control = self.control.GetProgenyControl(8, 4, refresh=True)
+            text_control = self.control.GetProgenyControl(8, 4)
             if text_control is not None:
                 if text_control.Name == text:
                     return text
