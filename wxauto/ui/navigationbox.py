@@ -47,5 +47,9 @@ class NavigationBox:
 
     # 是否有新消息
     def has_new_message(self):
-        img = self.chat_icon.ScreenShot(return_img=True)
+        from wxauto.utils.win32 import capture
+
+        rect = self.chat_icon.BoundingRectangle
+        bbox = rect.left, rect.top, rect.right, rect.bottom
+        img = capture(self.root.HWND, bbox)
         return any(p[0] > p[1] and p[0] > p[2] for p in img.getdata())
