@@ -191,7 +191,7 @@ class WeChat(Chat, Listener):
         try:
             sys.stdout.flush()
         except:
-            wxlog.debug('sys.stdout.flush() failed')
+            pass
         temp_listen = self.listen.copy()
         for who in temp_listen:
             chat, callback = temp_listen.get(who, (None, None))
