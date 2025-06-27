@@ -188,7 +188,10 @@ class WeChat(Chat, Listener):
         self.Show()
 
     def _get_listen_messages(self):
-        sys.stdout.flush()
+        try:
+            sys.stdout.flush()
+        except:
+            wxlog.debug('sys.stdout.flush() failed')
         temp_listen = self.listen.copy()
         for who in temp_listen:
             chat, callback = temp_listen.get(who, (None, None))
