@@ -155,14 +155,14 @@ class WeChatMainWnd(WeChatSubWnd):
             exact: bool=False
         ) -> ChatBox:
         if nickname and (chatbox := WeChatSubWnd(nickname, self, timeout=0)).control:
-            return chatbox._chat_api
+            return chatbox.chatbox
         else:
             if nickname:
                 switch_result = self.sessionbox.switch_chat(keywords=nickname, exact=exact)
                 if not switch_result:
                     return None
-            if self._chat_api.msgbox.Exists(0.5):
-                return self._chat_api
+            if self.chatbox.msgbox.Exists(0.5):
+                return self.chatbox
             
     def switch_chat(
             self, 
