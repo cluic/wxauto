@@ -76,7 +76,10 @@ class WeChatSubWnd(BaseUISubWnd):
             at: Union[str, List[str]]=None,
             exact: bool=False,
         ) -> WxResponse:
-        return self._get_chatbox(who, exact).send_msg(msg, clear, at)
+        chatbox = self._get_chatbox(who, exact)
+        if not chatbox:
+            return WxResponse.failure(f'未找到会话: {who}')
+        return chatbox.send_msg(msg, clear, at)
     
     def send_files(
             self, 
@@ -84,14 +87,20 @@ class WeChatSubWnd(BaseUISubWnd):
             who=None, 
             exact=False
         ) -> WxResponse:
-        return self._get_chatbox(who, exact).send_file(filepath)
+        chatbox = self._get_chatbox(who, exact)
+        if not chatbox:
+            return WxResponse.failure(f'未找到会话: {who}')
+        return chatbox.send_file(filepath)
 
     def get_group_members(
             self,
             who: str=None,
             exact: bool=False
         ) -> List[str]:
-        return self._get_chatbox(who, exact).get_group_members()
+        chatbox = self._get_chatbox(who, exact)
+        if not chatbox:
+            return WxResponse.failure(f'未找到会话: {who}')
+        return chatbox.get_group_members()
     
     def get_msgs(self):
         chatbox = self._get_chatbox()
@@ -146,12 +155,14 @@ class WeChatMainWnd(WeChatSubWnd):
             exact: bool=False
         ) -> ChatBox:
         if nickname and (chatbox := WeChatSubWnd(nickname, self, timeout=0)).control:
-            return chatbox.chatbox
+            return chatbox._chat_api
         else:
             if nickname:
-                self.sessionbox.switch_chat(keywords=nickname, exact=exact)
-            if self.chatbox.msgbox.Exists(0.5):
-                return self.chatbox
+                switch_result = self.sessionbox.switch_chat(keywords=nickname, exact=exact)
+                if not switch_result:
+                    return None
+            if self._chat_api.msgbox.Exists(0.5):
+                return self._chat_api
             
     def switch_chat(
             self, 
