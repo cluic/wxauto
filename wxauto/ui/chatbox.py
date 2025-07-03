@@ -79,7 +79,6 @@ class ChatBox(BaseUISubWnd):
         return USED_MSG_IDS[self.id]
     
     def get_info(self):
-        self._show()
         chat_info = {}
         walk = uia.WalkControl(self.control)
         for chat_name_control, depth in walk:
@@ -103,11 +102,17 @@ class ChatBox(BaseUISubWnd):
             chat_info['chat_name'] = chat_name_control.Name
         elif chat_name_control_count >= 2:
             try:
-                chat_info['group_member_count'] =\
-                    int(chat_name_control_list[-1].Name.replace('(', '').replace(')', ''))
-                chat_info['chat_type'] = 'group'
-                chat_info['chat_name'] =\
-                    chat_name_control.Name.replace(chat_name_control_list[-1].Name, '')
+                second_text = chat_name_control_list[1].Name
+                if second_text.startswith('@'):
+                    chat_info['company'] = second_text
+                    chat_info['chat_type'] = 'service'
+                    chat_info['chat_name'] = chat_name_control.Name
+                else:
+                    chat_info['group_member_count'] =\
+                        int(second_text.replace('(', '').replace(')', ''))
+                    chat_info['chat_type'] = 'group'
+                    chat_info['chat_name'] =\
+                        chat_name_control.Name.replace(second_text, '')
             except:
                 chat_info['chat_type'] = 'friend'
                 chat_info['chat_name'] = chat_name_control.Name
@@ -118,6 +123,7 @@ class ChatBox(BaseUISubWnd):
             if ori_chat_name_control.Exists(0):
                 chat_info['chat_remark'] = chat_info['chat_name']
                 chat_info['chat_name'] = ori_chat_name_control.Name
+        self._info = chat_info
         return chat_info
     
 
