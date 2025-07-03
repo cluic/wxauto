@@ -10,6 +10,14 @@ class SelfTextMessage(SelfMessage, TextMessage):
         ):
         super().__init__(control, parent)
 
+class SelfQuoteMessage(SelfMessage, QuoteMessage):
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox",
+        ):
+        super().__init__(control, parent)
+
 class SelfImageMessage(SelfMessage, ImageMessage):
     def __init__(
             self, 

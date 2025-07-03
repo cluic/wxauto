@@ -10,6 +10,14 @@ class FriendTextMessage(FriendMessage, TextMessage):
         ):
         super().__init__(control, parent)
 
+class FriendQuoteMessage(FriendMessage, QuoteMessage):
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox",
+        ):
+        super().__init__(control, parent)
+
 class FriendImageMessage(FriendMessage, ImageMessage):
     def __init__(
             self, 

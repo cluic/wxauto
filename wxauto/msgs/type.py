@@ -15,7 +15,7 @@ from typing import (
 )
 from pathlib import Path
 import shutil
-
+import re
 
 class TextMessage(HumanMessage):
     type = 'text'
@@ -27,6 +27,18 @@ class TextMessage(HumanMessage):
         ):
         super().__init__(control, parent)
 
+class QuoteMessage(HumanMessage):
+    type = 'quote'
+    
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox",
+        ):
+        super().__init__(control, parent)
+        self.content, self.quote_content = \
+            re.findall(self._lang('re_引用消息'), self.content, re.DOTALL)[0]
+        
 class MediaMessage:
 
     def download(
