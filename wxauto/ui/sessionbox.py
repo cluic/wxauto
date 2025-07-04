@@ -208,8 +208,11 @@ class SessionElement:
         self.isnew = (new_tag_control := control.GetProgenyControl(2, 2)) is not None
         self.new_count = 0
         if self.isnew:
-            if new_tag_control.Name:
-                self.new_count = int(new_tag_control.Name)
+            if new_tag_name := (new_tag_control.Name):
+                try:
+                    self.new_count = int(new_tag_name)
+                except ValueError:
+                    self.new_count = 999
             else:
                 new_text = re.findall(self._lang('re_条数'), str(self.content))
                 if new_text:
