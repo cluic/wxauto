@@ -211,6 +211,7 @@ class SessionElement:
             if new_tag_name := (new_tag_control.Name):
                 try:
                     self.new_count = int(new_tag_name)
+                    self.ismute = False
                 except ValueError:
                     self.new_count = 999
             else:
