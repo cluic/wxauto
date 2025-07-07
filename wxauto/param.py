@@ -20,7 +20,7 @@ class WxParam:
     DEFAULT_MESSAGE_XBIAS = 51
 
     # 是否强制重新自动获取X偏移量，如果设置为True，则每次启动都会重新获取
-    FORCE_MESSAGE_XBIAS: bool = False
+    FORCE_MESSAGE_XBIAS: bool = True
 
     # 监听消息时间间隔，单位秒
     LISTEN_INTERVAL: int = 1
