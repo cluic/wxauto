@@ -1,6 +1,6 @@
 [project]
 name = "wxauto"
-version = "39.1.11"
+version = "39.1.12"
 description = "wxauto 3.9 V2 version"
 authors = [
     {name = "Cluic", email = "tikic@qq.com"}
