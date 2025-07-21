@@ -111,6 +111,8 @@ class WeChatSubWnd(BaseUISubWnd):
     def get_new_msgs(self):
         return self._get_chatbox().get_new_msgs()
 
+    def get_msg_by_id(self, msg_id: str):
+        return self._get_chatbox().get_msg_by_id(msg_id)
 
 class WeChatMainWnd(WeChatSubWnd):
     _ui_cls_name: str = 'WeChatMainWndForPC'

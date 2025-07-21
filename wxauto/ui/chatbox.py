@@ -267,6 +267,12 @@ class ChatBox(BaseUISubWnd):
                 in new_controls
                 if msg_control.ControlTypeName == 'ListItemControl'
             ]
+    def get_msg_by_id(self, msg_id: str):
+        if not self.msgbox.Exists(0):
+            return []
+        msg_controls = self.msgbox.GetChildren()
+        if control_list := [i for i in msg_controls if i.runtimeid == msg_id]:
+            return parse_msg(control_list[0], self)
     
     def _get_tail_after_nth_match(self, msgs, last_msg, n):
         matches = [

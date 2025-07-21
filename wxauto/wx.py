@@ -154,6 +154,17 @@ class Chat:
             return []
         return self.core.get_new_msgs()
     
+    def GetMessageById(self, msg_id: str) -> 'Message':
+        """根据消息id获取消息
+
+        Args:
+            msg_id (str): 消息id
+
+        Returns:
+            Message: 消息对象
+        """
+        return self.core.get_msg_by_id(msg_id)
+    
     def GetGroupMembers(self) -> List[str]:
         """获取当前聊天群成员
 
