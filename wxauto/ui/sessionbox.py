@@ -185,19 +185,12 @@ class SessionElement:
         self.root = parent.root
         self.parent = parent
         self.control = control
-        self.name = (
-            temp_control.Name 
-            if (temp_control := control.GetProgenyControl(4, control_type='TextControl'))
-            else None
-        )
-        self.time = (
-            temp_control.Name 
-            if (temp_control := control.GetProgenyControl(4, 1, control_type='TextControl')) 
-            else None
-        )
+        info_controls = [i for i in self.control.GetProgenyControl(3).GetChildren() if i.ControlTypeName=='TextControl']
+        self.name = info_controls[0].Name
+        self.time = info_controls[-1].Name
         self.content = (
             temp_control.Name 
-            if (temp_control := control.GetProgenyControl(4, 2, control_type='TextControl')) 
+            if (temp_control := control.GetProgenyControl(4, -1, control_type='TextControl')) 
             else None
         )
         self.ismute = (
@@ -217,9 +210,13 @@ class SessionElement:
             else:
                 new_text = re.findall(self._lang('re_条数'), str(self.content))
                 if new_text:
-                    self.new_count = int(re.findall('\d+', new_text[0])[0])
+                    try:
+                        self.new_count = int(re.findall('\d+', new_text[0])[0])
+                    except ValueError:
+                        self.new_count = 999
                     self.content = self.content[len(new_text[0])+1:]
-                else: self.new_count = 1
+                else: 
+                    self.new_count = 1
                     
 
         self.info = {
