@@ -48,8 +48,7 @@ def parse_msg_attr(
 
     # TimeMessage
     if (
-        height == MESSAGE_ATTRS.TIME_TEXT_HEIGHT
-        and length in MESSAGE_ATTRS.TIME_MSG_CONTROL_NUM
+        length in MESSAGE_ATTRS.TIME_MSG_CONTROL_NUM
     ):
         return TimeMessage(control, parent)
     
