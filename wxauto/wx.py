@@ -72,6 +72,10 @@ class Chat:
     def __repr__(self):
         return f'<{PROJECT_NAME} - {self.__class__.__name__} object("{self.core.nickname}")>'
     
+    @property
+    def chat_type(self):
+        return self.core.chatbox.get_info().get('chat_type', None)
+    
     def Show(self):
         """显示窗口"""
         self.core._show()
