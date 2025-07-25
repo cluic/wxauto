@@ -41,7 +41,12 @@ class SessionBox:
 
     def get_session(self) -> List[SessionElement]:
         if self.session_list.Exists(0):
-            return [SessionElement(i, self) for i in self.session_list.GetChildren()]
+            return [
+                SessionElement(i, self) 
+                for i in self.session_list.GetChildren()
+                if i.Name != self._lang('折叠置顶聊天')
+                and not re.match(self._lang('re_置顶聊天'), i.Name)
+            ]
         elif self.archived_session_list.Exists(0):
             return [SessionElement(i, self) for i in self.archived_session_list.GetChildren()]
         else:
