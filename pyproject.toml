@@ -1,12 +1,12 @@
 [project]
 name = "wxauto"
-version = "39.1.14"
+version = "39.1.15"
 description = "wxauto 3.9 V2 version"
 authors = [
     {name = "Cluic", email = "tikic@qq.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.8,<=3.14"
+requires-python = ">=3.8,<=3.15"
 dependencies = [
     "tenacity",
     "pywin32",
