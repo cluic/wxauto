@@ -37,8 +37,11 @@ class ChatBox(BaseUISubWnd):
         self.sendbtn = self.control.ButtonControl(Name=self._lang('发送'))
         self.tools = self.control.PaneControl().ToolBarControl()
         # self.id = self.msgbox.runtimeid
+        self._empty = False   # 用于记录是否为完全没有聊天记录的窗口，因为这种窗口之前有不会触发新消息判断的问题
         if (cid := self.id) and cid not in USED_MSG_IDS:
             USED_MSG_IDS[self.id] = tuple((i.runtimeid for i in self.msgbox.GetChildren()))
+            if not USED_MSG_IDS[cid]:
+                self._empty = True
 
     def _lang(self, text: str) -> str:
         return WECHAT_CHAT_BOX.get(text, {WxParam.LANGUAGE: text}).get(WxParam.LANGUAGE)
@@ -240,11 +243,14 @@ class ChatBox(BaseUISubWnd):
             return []
         msg_controls = self.msgbox.GetChildren()
         now_msg_ids = tuple((i.runtimeid for i in msg_controls))
-        if (
-            not now_msg_ids
-            or (not self.used_msg_ids and now_msg_ids)
-            or now_msg_ids[-1] == self.used_msg_ids[-1]
-            or not set(now_msg_ids)&set(self.used_msg_ids)
+        if not now_msg_ids:  # 当前没有消息id
+            return []
+        if self._empty and self.used_msg_ids:
+            self._empty = False
+        if not self._empty and (
+            (not self.used_msg_ids and now_msg_ids)  # 没有使用过的消息id，但当前有消息id
+            or now_msg_ids[-1] == self.used_msg_ids[-1] # 当前最后一条消息id和上次一样
+            or not set(now_msg_ids)&set(self.used_msg_ids)  # 当前消息id和上次没有交集
         ):
             # wxlog.debug('没有新消息')
             return []
