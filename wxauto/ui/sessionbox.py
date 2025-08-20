@@ -181,6 +181,7 @@ class SessionBox:
                 first_session_name = self.session_list.GetChildren()[0].Name
 
 
+
 class SessionElement:
     def __init__(
             self, 
