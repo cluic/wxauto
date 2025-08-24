@@ -195,6 +195,7 @@ class WeChat(Chat, Listener):
             hwnd = kwargs['hwnd']
         self.core = WeChatMainWnd(hwnd)
         self.nickname = self.core.nickname
+        self.SessionBox = self.core.sessionbox
         self.listen = {}
         if debug:
             wxlog.set_debug(True)
