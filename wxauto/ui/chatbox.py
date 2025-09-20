@@ -200,6 +200,9 @@ class ChatBox(BaseUISubWnd):
         self._activate_editbox()
         self.editbox.SendKeys('{Ctrl}v')
         self.sendbtn.Click()
+        if self.editbox.GetValuePattern().Value:
+            return WxResponse.fail("发送失败，请重试")
+        return WxResponse.success()
     
     def load_more(self, interval=0.3):
         self._show()
