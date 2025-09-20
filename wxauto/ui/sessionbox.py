@@ -53,9 +53,11 @@ class SessionBox:
             return []
     
     def roll_up(self, n: int=5):
+        self.control.MiddleClick()
         self.control.WheelUp(wheelTimes=n)
 
     def roll_down(self, n: int=5):
+        self.control.MiddleClick()
         self.control.WheelDown(wheelTimes=n)
     
     def switch_chat(
