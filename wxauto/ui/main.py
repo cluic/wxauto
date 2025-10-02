@@ -114,6 +114,15 @@ class WeChatSubWnd(BaseUISubWnd):
     def get_msg_by_id(self, msg_id: str):
         return self._get_chatbox().get_msg_by_id(msg_id)
 
+
+version_error_msg = """
+错误：未找到可用的微信窗口
+
+当前版本仅适用于3.9版本客户端，如果您当前客户端版本为4.x，请在官网下载3.9版本客户端
+下载链接：https://pc.weixin.qq.com
+"""
+
+
 class WeChatMainWnd(WeChatSubWnd):
     _ui_cls_name: str = 'WeChatMainWndForPC'
     _ui_name: str = '微信'
@@ -126,7 +135,7 @@ class WeChatMainWnd(WeChatSubWnd):
         else:
             hwnd = FindWindow(classname=self._ui_cls_name)
             if not hwnd:
-                raise Exception(f'未找到微信窗口')
+                raise Exception(version_error_msg)
             self._setup_ui(hwnd)
         
         print(f'初始化成功，获取到已登录窗口：{self.nickname}')
