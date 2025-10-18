@@ -140,7 +140,8 @@ class FileMessage(HumanMessage):
             parent: "ChatBox"
         ):
         super().__init__(control, parent)
-        self.filename = control.TextControl().Name
+        #self.filename = control.TextControl().Name
+        self.filename = control.GetProgenyControl(9, control_type='TextControl').Name
         self.filesize = control.GetProgenyControl(10, control_type='TextControl').Name
 
     def download(
