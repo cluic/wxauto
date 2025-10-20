@@ -36,6 +36,15 @@ class FriendFileMessage(FriendMessage, FileMessage):
         ):
         super().__init__(control, parent)
 
+class FriendLinkMessage(FriendMessage, LinkMessage):
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox",
+
+        ):
+        super().__init__(control, parent)
+
 class FriendVideoMessage(FriendMessage, VideoMessage):
     def __init__(
             self, 

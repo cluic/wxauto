@@ -188,9 +188,8 @@ class FileMessage(HumanMessage):
             except:
                 time.sleep(0.01)
 
-
-class OtherMessage(BaseMessage):
-    type = 'other'
+class LinkMessage(BaseMessage):
+    type = 'link'
     
     def __init__(
             self, 
@@ -199,3 +198,14 @@ class OtherMessage(BaseMessage):
 
         ):
         super().__init__(control, parent)
+
+class OtherMessage(BaseMessage):
+    type = 'other'
+    
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox",
+        ):
+        super().__init__(control, parent)
+        self.url = control.TextControl().Name

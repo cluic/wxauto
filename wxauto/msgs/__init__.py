@@ -16,6 +16,7 @@ from .type import (
     VoiceMessage,
     VideoMessage,
     FileMessage,
+    LinkMessage,
     OtherMessage
 )
 from .self import (
@@ -25,6 +26,7 @@ from .self import (
     SelfImageMessage,
     SelfVideoMessage,
     SelfFileMessage,
+    SelfLinkMessage,
     SelfOtherMessage,
 )
 from .friend import (
@@ -34,6 +36,7 @@ from .friend import (
     FriendImageMessage,
     FriendVideoMessage,
     FriendFileMessage,
+    FriendLinkMessage,
     FriendOtherMessage,
 )
 
@@ -51,6 +54,7 @@ __all__ = [
     'VoiceMessage',
     'VideoMessage',
     'FileMessage',
+    'LinkMessage',
     'OtherMessage',
     'SelfMessage',
     'SelfTextMessage',
@@ -58,6 +62,7 @@ __all__ = [
     'SelfImageMessage',
     'SelfVideoMessage',
     'SelfFileMessage',
+    'SelfLinkMessage',
     'SelfOtherMessage',
     'FriendMessage',
     'FriendTextMessage',
@@ -65,5 +70,6 @@ __all__ = [
     'FriendImageMessage',
     'FriendVideoMessage',
     'FriendFileMessage',
+    'FriendLinkMessage',
     'FriendOtherMessage',
 ]

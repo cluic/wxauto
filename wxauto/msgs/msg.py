@@ -13,6 +13,7 @@ class MESSAGE_ATTRS:
     TIME_TEXT_HEIGHT = 34
     CHAT_TEXT_HEIGHT = 52
     FILE_MSG_HEIGHT = 115
+    LINK_MSG_HEIGHT = 115
     VOICE_MSG_HEIGHT = 55
 
     TEXT_MSG_CONTROL_NUM = (8, 9, 10, 11)
@@ -20,6 +21,7 @@ class MESSAGE_ATTRS:
     SYS_MSG_CONTROL_NUM = (4,5,6)
     IMG_MSG_CONTROL_NUM = (9, 10, 11, 12)
     FILE_MSG_CONTROL_NUM = tuple(i for i in range(15, 30))
+    LINK_MSG_CONTROL_NUM = tuple(i for i in range(15, 30))
     VOICE_MSG_CONTROL_NUM = tuple(i for i in range(10, 30))
     VIDEO_MSG_CONTROL_NUM = (13, 14, 15, 16)
     QUOTE_MSG_CONTROL_NUM = tuple(i for i in range(16, 30))
@@ -34,6 +36,7 @@ SEPICIAL_MSGS = [
         '[视频]',     # VideoMessage
         '[语音]',     # VoiceMessage
         '[文件]',     # FileMessage
+        '[链接]',     # LinkMessage
     ]
 ]
 
@@ -96,6 +99,10 @@ def parse_msg_type(
         # FileMessage
         elif content == _lang('[文件]') and length in MESSAGE_ATTRS.FILE_MSG_CONTROL_NUM:
             return getattr(msgtype, f'{attr}FileMessage')(control, parent)
+
+        # LinkMessage
+        elif content == _lang('[链接]') and length in MESSAGE_ATTRS.LINK_MSG_CONTROL_NUM:
+            return getattr(msgtype, f'{attr}LinkMessage')(control, parent)
     
     # TextMessage
     if length in MESSAGE_ATTRS.TEXT_MSG_CONTROL_NUM:
