@@ -175,8 +175,9 @@ class LinkMessage(HumanMessage):
         self.click()
         wechat_web = uia.PaneControl(ClassName="Chrome_WidgetWin_0", Name="微信")
         if wechat_web.Exists():
-            self._get_url(wechat_web)
+            url = self._get_url(wechat_web)
             self._close_webview(wechat_web)
+            return url
         else:
             wxlog.warning(f'找不到浏览器窗口')
 
