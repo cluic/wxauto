@@ -160,7 +160,7 @@ class LinkMessage(HumanMessage):
         else:
             wxlog.warning(f'找不到标签页')
 
-    def _close_webview(self, control: uia.Control)
+    def _close_webview(self, control: uia.Control):
         close_button = control.ButtonControl(Name="关闭", foundIndex=1)
         if close_button.Exists():
             close_button.Click()
