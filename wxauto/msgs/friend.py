@@ -54,6 +54,15 @@ class FriendVoiceMessage(FriendMessage, VoiceMessage):
         ):
         super().__init__(control, parent)
 
+class FriendLinkMessage(FriendMessage, LinkMessage):
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox",
+
+        ):
+        super().__init__(control, parent)
+
 class FriendOtherMessage(FriendMessage, OtherMessage):
     def __init__(
             self, 

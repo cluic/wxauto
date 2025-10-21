@@ -131,6 +131,35 @@ class VoiceMessage(HumanMessage):
                 text = text_control.Name
             time.sleep(0.1)
 
+class LinkMessage(HumanMessage):
+    type = 'link'
+    
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox"
+        ):
+        super().__init__(control, parent)
+
+    def get_url(self) -> str:
+        self.click()
+        wechat_web = self.control.PaneControl(ClassName="Chrome_WidgetWin_0", Name="微信")
+        if wechat_web.Exists():
+            tab = wechat_web.TabItemControl()
+            if tab.Exists():
+                tab.RightClick()
+                time.sleep(0.5)
+                copy_link_item = uia.MenuItemControl(Name="复制链接")
+                if copy_link_item.Exists():
+                    copy_link_item.Click()
+                    time.sleep(0.5)
+                    clipboard_data = ReadClipboardData()
+                    url = (clipboard_data.get('13') or
+                           clipboard_data.get('1') or
+                           None)
+                    return url
+        return None
+
 class FileMessage(HumanMessage):
     type = 'file'
     

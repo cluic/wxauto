@@ -50,6 +50,14 @@ class SelfVoiceMessage(SelfMessage, VoiceMessage):
         ):
         super().__init__(control, parent)
 
+class SelfLinkMessage(SelfMessage, LinkMessage):
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox"
+        ):
+        super().__init__(control, parent)
+
 class SelfOtherMessage(SelfMessage, OtherMessage):
     def __init__(
             self, 

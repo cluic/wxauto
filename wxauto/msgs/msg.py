@@ -23,6 +23,7 @@ class MESSAGE_ATTRS:
     VOICE_MSG_CONTROL_NUM = tuple(i for i in range(10, 30))
     VIDEO_MSG_CONTROL_NUM = (13, 14, 15, 16)
     QUOTE_MSG_CONTROL_NUM = tuple(i for i in range(16, 30))
+    LINK_MSG_CONTROL_NUM = tuple(i for i in range(15, 30))
 
 def _lang(text: str) -> str:
     return MESSAGES.get(text, {WxParam.LANGUAGE: text}).get(WxParam.LANGUAGE)
@@ -34,6 +35,7 @@ SEPICIAL_MSGS = [
         '[视频]',     # VideoMessage
         '[语音]',     # VoiceMessage
         '[文件]',     # FileMessage
+        '[链接]',     # LinkMessage
     ]
 ]
 
@@ -96,6 +98,10 @@ def parse_msg_type(
         # FileMessage
         elif content == _lang('[文件]') and length in MESSAGE_ATTRS.FILE_MSG_CONTROL_NUM:
             return getattr(msgtype, f'{attr}FileMessage')(control, parent)
+        
+        # LinkMessage
+        elif content == _lang('[链接]') and length in MESSAGE_ATTRS.LINK_MSG_CONTROL_NUM:
+            return getattr(msgtype, f'{attr}LinkMessage')(control, parent)
     
     # TextMessage
     if length in MESSAGE_ATTRS.TEXT_MSG_CONTROL_NUM:
