@@ -394,12 +394,12 @@ class WeChatBrowser(BaseUISubWnd):
             wxlog.debug(f'找不到标签页')
 
     def close(self):
-        close_button = control.ButtonControl(Name=self._lang('关闭'), foundIndex=1)
+        close_button = self.control.ButtonControl(Name=self._lang('关闭'), foundIndex=1)
         if close_button.Exists():
             close_button.Click()
-        close_button = control.ButtonControl(Name=self._lang('关闭'), foundIndex=2)
+        close_button = self.control.ButtonControl(Name=self._lang('关闭'), foundIndex=2)
         if close_button.Exists():
             close_button.Click()
-        close_button = control.ButtonControl(Name=self._lang('关闭'), foundIndex=3)
+        close_button = self.control.ButtonControl(Name=self._lang('关闭'), foundIndex=3)
         if close_button.Exists():
             close_button.Click()
