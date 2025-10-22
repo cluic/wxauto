@@ -131,6 +131,58 @@ class VoiceMessage(HumanMessage):
                 text = text_control.Name
             time.sleep(0.1)
 
+class LinkMessage(HumanMessage):
+    type = 'link'
+    
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox"
+        ):
+        super().__init__(control, parent)
+
+    def _get_url(self, control: uia.Control) -> str:
+        tab = control.TabItemControl()
+        if tab.Exists():
+            tab.RightClick()
+            time.sleep(0.5)
+            copy_link_item = uia.MenuItemControl(Name="复制链接")
+            if copy_link_item.Exists():
+                copy_link_item.Click()
+                time.sleep(0.5)
+                clipboard_data = ReadClipboardData()
+                url = (clipboard_data.get('13') or
+                        clipboard_data.get('1') or
+                        None)
+                return url
+            else:
+                wxlog.warning(f'找不到复制链接菜单项')
+        else:
+            wxlog.warning(f'找不到标签页')
+
+    def _close_webview(self, control: uia.Control):
+        close_button = control.ButtonControl(Name="关闭", foundIndex=1)
+        if close_button.Exists():
+            close_button.Click()
+        close_button = control.ButtonControl(Name="关闭", foundIndex=2)
+        if close_button.Exists():
+            close_button.Click()
+        close_button = control.ButtonControl(Name="关闭", foundIndex=3)
+        if close_button.Exists():
+            close_button.Click()
+
+    def get_url(self) -> str:
+        self.click()
+        wechat_web = uia.PaneControl(ClassName="Chrome_WidgetWin_0", Name="微信")
+        if wechat_web.Exists():
+            url = self._get_url(wechat_web)
+            self._close_webview(wechat_web)
+            return url
+        else:
+            wxlog.warning(f'找不到浏览器窗口')
+
+        return None
+
 class FileMessage(HumanMessage):
     type = 'file'
     
@@ -187,17 +239,6 @@ class FileMessage(HumanMessage):
                 return filepath
             except:
                 time.sleep(0.01)
-
-class LinkMessage(BaseMessage):
-    type = 'link'
-    
-    def __init__(
-            self, 
-            control: uia.Control, 
-            parent: "ChatBox",
-
-        ):
-        super().__init__(control, parent)
 
 class OtherMessage(BaseMessage):
     type = 'other'

@@ -25,6 +25,7 @@ class MESSAGE_ATTRS:
     VOICE_MSG_CONTROL_NUM = tuple(i for i in range(10, 30))
     VIDEO_MSG_CONTROL_NUM = (13, 14, 15, 16)
     QUOTE_MSG_CONTROL_NUM = tuple(i for i in range(16, 30))
+    LINK_MSG_CONTROL_NUM = tuple(i for i in range(15, 30))
 
 def _lang(text: str) -> str:
     return MESSAGES.get(text, {WxParam.LANGUAGE: text}).get(WxParam.LANGUAGE)
