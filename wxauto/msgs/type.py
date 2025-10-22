@@ -4,6 +4,7 @@ from wxauto.utils.tools import (
 from wxauto.ui.component import (
     CMenuWnd,
     WeChatImage,
+    WeChatBrowser,
 )
 from wxauto.utils.win32 import (
     ReadClipboardData,
@@ -141,45 +142,14 @@ class LinkMessage(HumanMessage):
         ):
         super().__init__(control, parent)
 
-    def _get_url(self, control: uia.Control) -> str:
-        tab = control.TabItemControl()
-        if tab.Exists():
-            tab.RightClick()
-            time.sleep(0.5)
-            copy_link_item = uia.MenuItemControl(Name="复制链接")
-            if copy_link_item.Exists():
-                copy_link_item.Click()
-                time.sleep(0.5)
-                clipboard_data = ReadClipboardData()
-                url = (clipboard_data.get('13') or
-                        clipboard_data.get('1') or
-                        None)
-                return url
-            else:
-                wxlog.warning(f'找不到复制链接菜单项')
-        else:
-            wxlog.warning(f'找不到标签页')
-
-    def _close_webview(self, control: uia.Control):
-        close_button = control.ButtonControl(Name="关闭", foundIndex=1)
-        if close_button.Exists():
-            close_button.Click()
-        close_button = control.ButtonControl(Name="关闭", foundIndex=2)
-        if close_button.Exists():
-            close_button.Click()
-        close_button = control.ButtonControl(Name="关闭", foundIndex=3)
-        if close_button.Exists():
-            close_button.Click()
-
     def get_url(self) -> str:
         self.click()
-        wechat_web = uia.PaneControl(ClassName="Chrome_WidgetWin_0", Name="微信")
-        if wechat_web.Exists():
-            url = self._get_url(wechat_web)
-            self._close_webview(wechat_web)
+        if webbrower := WeChatBrowser():
+            url = webbrower.get_url()
+            webbrower.close()
             return url
         else:
-            wxlog.warning(f'找不到浏览器窗口')
+            wxlog.debug(f'找不到浏览器窗口')
 
         return None
 
