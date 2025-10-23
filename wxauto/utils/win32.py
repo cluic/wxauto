@@ -64,6 +64,9 @@ def GetVersionByPath(file_path):
         version = None
     return version
 
+def GetWindowRect(hwnd):
+    return win32gui.GetWindowRect(hwnd)
+
 def capture(hwnd, bbox):
     # 获取窗口的屏幕坐标
     window_rect = win32gui.GetWindowRect(hwnd)

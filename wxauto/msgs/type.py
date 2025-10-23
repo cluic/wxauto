@@ -4,6 +4,7 @@ from wxauto.utils.tools import (
 from wxauto.ui.component import (
     CMenuWnd,
     WeChatImage,
+    WeChatBrowser,
 )
 from wxauto.utils.win32 import (
     ReadClipboardData,
@@ -131,6 +132,27 @@ class VoiceMessage(HumanMessage):
                 text = text_control.Name
             time.sleep(0.1)
 
+class LinkMessage(HumanMessage):
+    type = 'link'
+    
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox"
+        ):
+        super().__init__(control, parent)
+
+    def get_url(self) -> str:
+        self.click()
+        if webbrower := WeChatBrowser():
+            url = webbrower.get_url()
+            webbrower.close()
+            return url
+        else:
+            wxlog.debug(f'找不到浏览器窗口')
+
+        return None
+
 class FileMessage(HumanMessage):
     type = 'file'
     
@@ -140,7 +162,8 @@ class FileMessage(HumanMessage):
             parent: "ChatBox"
         ):
         super().__init__(control, parent)
-        self.filename = control.TextControl().Name
+        #self.filename = control.TextControl().Name
+        self.filename = control.GetProgenyControl(9, control_type='TextControl').Name
         self.filesize = control.GetProgenyControl(10, control_type='TextControl').Name
 
     def download(
@@ -187,7 +210,6 @@ class FileMessage(HumanMessage):
             except:
                 time.sleep(0.01)
 
-
 class OtherMessage(BaseMessage):
     type = 'other'
     
@@ -195,6 +217,6 @@ class OtherMessage(BaseMessage):
             self, 
             control: uia.Control, 
             parent: "ChatBox",
-
         ):
         super().__init__(control, parent)
+        self.url = control.TextControl().Name

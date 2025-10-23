@@ -3,6 +3,8 @@ from wxauto.utils import (
     SetClipboardText,
     ReadClipboardData,
     GetAllWindows,
+    GetWindowRect,
+    capture
 )
 from wxauto.param import (
     WxParam, 
@@ -20,6 +22,7 @@ from wxauto.utils.tools import (
     get_file_dir,
     roll_into_view,
 )
+from PIL import Image
 from wxauto import uiautomation as uia
 import traceback
 import shutil
@@ -92,7 +95,6 @@ class SelectContactWnd(BaseUISubWnd):
                 wxlog.debug(f'所有好友均未未找到：{target}')
                 return WxResponse.failure(f'所有好友均未未找到：{target}')
             
-
 class CMenuWnd(BaseUISubWnd):
     _ui_cls_name = 'CMenuWnd'
 
@@ -146,7 +148,6 @@ class NetErrInfoTipsBarWnd(BaseUISubWnd):
     def __bool__(self):
         return self.exists(0)
     
-
 class WeChatImage(BaseUISubWnd):
     _ui_cls_name = 'ImagePreviewWnd'
 
@@ -319,3 +320,86 @@ class NewFriendElement:
             permission_chat.Click()
 
         NewFriendsWnd.ButtonControl(Name='确定').Click()
+
+class WeChatLoginWnd(BaseUISubWnd):
+    _ui_cls_name = 'WeChatLoginWndForPC'
+
+    def __init__(self):
+        self.hwnd = FindWindow(classname=self._ui_cls_name)
+        if self.hwnd:
+            self.control = ControlFromHandle(self.hwnd)
+            self.enter = self.control.ButtonControl(Name=self._lang('进入微信'))
+            if self.enter.Exists(0):
+                self.type = 'enter'
+            else:
+                self.qrcode = self.control.ButtonControl(Name=self._lang('二维码'))
+                if self.qrcode.Exists(0):
+                    self.type = 'qrcode'
+            
+    def _lang(self, text: str) -> str:
+        return WECHAT_LOGINWND.get(text, {WxParam.LANGUAGE: text}).get(WxParam.LANGUAGE)
+    
+    def login_type(self):
+        return self.type
+    
+    def login(self) -> bool:
+        self._show()
+        if self.type == 'enter':
+            self.enter.Click()
+            return True
+        else:
+            return False
+
+    def get_qrcode(self) -> Image.Image:
+        self._show()
+        if self.type == 'qrcode':
+            window_rect = GetWindowRect(self.hwnd)
+            win_left, win_top, win_right, win_bottom = window_rect
+            
+            bbox = win_left + 62, win_top + 88, win_left + 218, win_top + 245
+            return capture(self.hwnd, bbox)
+        else:
+            return None
+        
+
+class WeChatBrowser(BaseUISubWnd):
+    _ui_cls_name = 'Chrome_WidgetWin_0'
+    _ui_name = '微信'
+
+    def __init__(self):
+        self.hwnd = FindWindow(classname=self._ui_cls_name, name=self._ui_name)
+        if self.hwnd:
+            self.control = ControlFromHandle(self.hwnd)
+
+    def _lang(self, text: str) -> str:
+        return WECHAT_BROWSER.get(text, {WxParam.LANGUAGE: text}).get(WxParam.LANGUAGE)
+
+    def get_url(self) -> str:
+        self._show()
+        tab = self.control.TabItemControl()
+        if tab.Exists():
+            tab.RightClick()
+            copy_link_item = uia.MenuItemControl(Name=self._lang('复制链接'))
+            if copy_link_item.Exists():
+                copy_link_item.Click()
+                clipboard_data = ReadClipboardData()
+                url = (clipboard_data.get('13') or
+                        clipboard_data.get('1') or
+                        None)
+                SetClipboardText('')
+                return url
+            else:
+                wxlog.debug(f'找不到复制链接菜单项')
+        else:
+            wxlog.debug(f'找不到标签页')
+
+    def close(self):
+        close_button = self.control.ButtonControl(Name=self._lang('关闭'), foundIndex=1)
+        if close_button.Exists():
+            close_button.Click()
+        close_button = self.control.ButtonControl(Name=self._lang('关闭'), foundIndex=2)
+        if close_button.Exists():
+            close_button.Click()
+        close_button = self.control.ButtonControl(Name=self._lang('关闭'), foundIndex=3)
+        if close_button.Exists():
+            close_button.Click()

@@ -34,6 +34,14 @@ class SelfFileMessage(SelfMessage, FileMessage):
         ):
         super().__init__(control, parent)
 
+class SelfLinkMessage(SelfMessage, LinkMessage):
+    def __init__(
+            self, 
+            control: uia.Control, 
+            parent: "ChatBox"
+        ):
+        super().__init__(control, parent)
+
 class SelfVideoMessage(SelfMessage, VideoMessage):
     def __init__(
             self, 

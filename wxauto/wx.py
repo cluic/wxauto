@@ -2,6 +2,9 @@ from .ui.main import (
     WeChatMainWnd,
     WeChatSubWnd
 )
+from .ui.component import (
+    WeChatLoginWnd
+)
 from .param import (
     WxResponse, 
     WxParam, 
@@ -15,6 +18,7 @@ from typing import (
     Callable,
     TYPE_CHECKING
 )
+from PIL import Image
 from abc import ABC, abstractmethod
 import threading
 import traceback
@@ -358,3 +362,19 @@ class WeChat(Chat, Listener):
                 wxlog.debug(f'wxauto("{self.nickname}") shutdown')
                 self.StopListening(True)
                 break
+
+class WeChatLogin:
+    def Login(self):
+        """登录"""
+        if loginWnd := WeChatLoginWnd() :
+            return loginWnd.login()
+        else:
+            return True
+
+    def GetQRCode(self) -> Image.Image: 
+        """获取二维码"""
+        if loginWnd := WeChatLoginWnd() :
+            return loginWnd.get_qrcode()
+        else:
+            return None
+        
