@@ -3,3 +3,9 @@ class WxautoOCRError(Exception):
 
 class NetWorkError(Exception):
     ...
+
+class WxautoUINotFoundError(Exception):
+    ...
+
+class WxautoNoteLoadTimeoutError(Exception):
+    ...

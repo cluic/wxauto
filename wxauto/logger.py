@@ -125,4 +125,5 @@ class WxautoLogger:
         self._ensure_file_logger()  # 确保文件日志初始化
         self.logger.critical(msg, *args, stacklevel=stacklevel, **kwargs)
 
+# wxlog实例化的地方不再创建文件日志
 wxlog = WxautoLogger()

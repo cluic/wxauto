@@ -1,6 +1,8 @@
 from pathlib import Path
+from wxauto.uia import uiautomation as uia
+from .win32 import FindWindow, GetAllWindows
 from datetime import datetime, timedelta
-import time
+from PIL import Image
 import re
 
 def get_file_dir(dir_path=None):
@@ -10,6 +12,27 @@ def get_file_dir(dir_path=None):
         dir_path = Path(dir_path)
     dir_path.mkdir(parents=True, exist_ok=True)
     return dir_path
+
+def find_window_from_root(classname=None, name=None, timeout=0):
+    hwnd = FindWindow(classname=classname, name=name, timeout=timeout)
+    if hwnd:
+        control = uia.ControlFromHandle(hwnd)
+        return control
+    return None
+
+def find_all_windows_from_root(classname:str=None, name:str=None, pid:int=None):
+    windows = GetAllWindows()
+    targets = []
+    for window in windows:
+        if (
+            (all((classname, name)) and classname == window[1] and name == window[2])
+            or (all((classname, not name)) and classname == window[1])
+            or (all((not classname, name)) and name == window[2])
+        ):
+            targets.append(uia.ControlFromHandle(window[0]))
+    if pid:
+        targets = [w for w in targets if w.ProcessId == pid]
+    return targets
 
 def now_time(fmt='%Y%m%d%H%M%S%f'):
     return datetime.now().strftime(fmt)
@@ -70,33 +93,15 @@ def parse_wechat_time(time_str):
     return time_str
 
 
-def roll_into_view(win, ele, equal=False, bias=0):
-    while ele.BoundingRectangle.ycenter() < win.BoundingRectangle.top + bias or ele.BoundingRectangle.ycenter() >= win.BoundingRectangle.bottom - bias:
-        if ele.BoundingRectangle.ycenter() < win.BoundingRectangle.top + bias:
-            # 上滚动
-            while True:
-                if not ele.Exists(0) or not ele.BoundingRectangle.height():
-                    return 'not exist'
-                win.WheelUp(wheelTimes=1)
-                time.sleep(0.1)
-                if equal:
-                    if ele.BoundingRectangle.ycenter() >= win.BoundingRectangle.top + bias:
-                        break
-                else:
-                    if ele.BoundingRectangle.ycenter() > win.BoundingRectangle.top + bias:
-                        break
+def is_valid_image(file_path):
+    path = Path(file_path)
+    
+    if not path.exists() or not path.is_file():
+        return False
 
-        elif ele.BoundingRectangle.ycenter() >= win.BoundingRectangle.bottom - bias:
-            # 下滚动
-            while True:
-                if not ele.Exists(0) or not ele.BoundingRectangle.height():
-                    return 'not exist'
-                win.WheelDown(wheelTimes=1)
-                time.sleep(0.1)
-                if equal:
-                    if ele.BoundingRectangle.ycenter() <= win.BoundingRectangle.bottom - bias:
-                        break
-                else:
-                    if ele.BoundingRectangle.ycenter() < win.BoundingRectangle.bottom - bias:
-                        break
-        time.sleep(0.3)
+    try:
+        with Image.open(path) as img:
+            img.verify()
+        return True
+    except Exception as e:
+        return False

@@ -1,6 +1,7 @@
-from wxauto import uiautomation as uia
+from wxauto import uia
 from wxauto.param import PROJECT_NAME
 from wxauto.logger import wxlog
+from wxauto.utils.lock import uilock
 from abc import ABC, abstractmethod
 import win32gui
 from typing import Union
@@ -30,6 +31,11 @@ class BaseUIWnd(ABC):
             win32gui.SetWindowPos(self.HWND, -2, 0, 0, 0, 0, 3)
         self.control.SwitchToThisWindow()
 
+    @property
+    def pid(self):
+        return self.control.ProcessId
+
+    @uilock
     def close(self):
         try:
             self.control.SendKeys('{Esc}')

@@ -1,5 +1,6 @@
 #!python3
 # -*- coding: utf-8 -*-
+# cython: language_level=3
 """
 uiautomation for Python 3.
 Author: yinkaisheng@live.com
@@ -17,21 +18,33 @@ import sys
 import time
 import datetime
 import re
+import random
 import threading
 import ctypes
+import _ctypes
 import ctypes.wintypes
 import comtypes #need pip install comtypes
 import comtypes.client
+import win32gui
+import win32api
+import win32con
+import win32ui
+import pyperclip
+from PIL import ImageGrab
 from typing import (Any, Callable, Dict, List, Iterable, Tuple)  # need pip install typing for Python3.4 or lower
+from .uiplug import *
+from hashlib import md5
+
+comtypes.CoInitialize()
 TreeNode = Any
 
 # print('uia done')
 AUTHOR_MAIL = 'yinkaisheng@live.com'
 METRO_WINDOW_CLASS_NAME = 'Windows.UI.Core.CoreWindow'  # for Windows 8 and 8.1
-SEARCH_INTERVAL = 0.5  # search control interval seconds
+SEARCH_INTERVAL = 0.01  # search control interval seconds
 MAX_MOVE_SECOND = 1  # simulate mouse move or drag max seconds
 TIME_OUT_SECOND = 10
-OPERATION_WAIT_TIME = 0.1
+OPERATION_WAIT_TIME = 0.5
 MAX_PATH = 260
 DEBUG_SEARCH_TIME = False
 DEBUG_EXIST_DISAPPEAR = False
@@ -41,6 +54,49 @@ IsNT6orHigher = os.sys.getwindowsversion().major >= 6
 ProcessTime = time.perf_counter  #this returns nearly 0 when first call it if python version <= 3.6
 ProcessTime()  # need to call it once if python version <= 3.6
 
+try:
+    from anytree import Node, RenderTree
+
+    def PrintAllControlTree(ele, max=9999999):
+        def findall(ele, n=0, node=None):
+            if n >= max:
+                return node
+            nn = '\n'
+            nodename = f"[{ele.ControlTypeName} {n}](\"{ele.ClassName}\", \"{ele.Name.replace(nn, '')}\", \"{ele.AutomationId}\", \"{''.join([str(i) for i in ele.GetRuntimeId()])}\")"
+            if not node:
+                node1 = Node(nodename)
+            else:
+                node1 = Node(nodename, parent=node)
+            eles = ele.GetChildren()
+            for ele1 in eles:
+                findall(ele1, n+1, node1)
+            return node1
+        tree = RenderTree(findall(ele))
+        tree_text = ''
+        for pre, fill, node in tree:
+            tree_text += f"{pre}{node.name}\n"
+        return tree_text
+except:
+    pass
+
+import tempfile
+import os
+
+def create_temp_png_path(prefix='image_', suffix='.png'):
+    """
+    创建一个临时 PNG 图片路径（不创建文件），你可以将图片保存到这个路径。
+
+    Args:
+        prefix (str): 文件名前缀，默认是'image_'
+        suffix (str): 文件扩展名，默认是'.png'
+
+    Returns:
+        str: 临时 PNG 图片路径
+    """
+    fd, path = tempfile.mkstemp(prefix=prefix, suffix=suffix)
+    os.close(fd)  # 关闭文件描述符，不保留文件
+    os.remove(path)  # 删除实际文件，只保留路径
+    return path
 
 class _AutomationClient:
     _instance = None
@@ -59,7 +115,6 @@ class _AutomationClient:
                 self.UIAutomationCore = comtypes.client.GetModule("UIAutomationCore.dll")
                 self.IUIAutomation = comtypes.client.CreateObject("{ff48dba4-60ef-4201-aa87-54103eef594e}", interface=self.UIAutomationCore.IUIAutomation)
                 self.ViewWalker = self.IUIAutomation.RawViewWalker
-                #self.ViewWalker = self.IUIAutomation.ControlViewWalker
                 break
             except Exception as ex:
                 if retry + 1 == tryCount:
@@ -302,6 +357,14 @@ PatternIdNames = {
     PatternId.WindowPattern: 'WindowPattern',
 }
 
+class TreeScope:
+    Element = 1
+    Children = 2
+    Parent = 4
+    Descendants = 8
+    Subtree = 7
+    Ancestors = 16
+    All = 31
 
 class PropertyId:
     """
@@ -1397,6 +1460,15 @@ class Keys:
     VK_PA1 = 0xFD                           #PA1 key
     VK_OEM_CLEAR = 0xFE                     #Clear key
 
+GlobalKeyNames = [
+    'CONTROL', 
+    'ALT', 
+    'SHIFT', 
+    'WIN', 
+    'CTRL', 
+    'LWIN', 
+    'RWIN'
+]
 
 SpecialKeyNames = {
     'LBUTTON': Keys.VK_LBUTTON,                        #Left mouse button
@@ -1678,7 +1750,6 @@ class INPUT(ctypes.Structure):
     _fields_ = (('type', ctypes.wintypes.DWORD),
                 ('union', _INPUTUnion))
 
-
 class Rect():
     """
     class Rect, like `ctypes.wintypes.RECT`.
@@ -1688,6 +1759,23 @@ class Rect():
         self.top = top
         self.right = right
         self.bottom = bottom
+
+    @property
+    def bbox(self) -> Tuple[int, int, int, int]:
+        return self.left, self.top, self.right, self.bottom
+    
+    @property
+    def info(self) -> Dict[str, int]:
+        return {
+            'left': self.left,
+            'top': self.top,
+            'right': self.right,
+            'bottom': self.bottom,
+            'width': self.width(),
+            'height': self.height(),
+            'xcenter': self.xcenter(),
+            'ycenter': self.ycenter()
+        }
 
     def width(self) -> int:
         return self.right - self.left
@@ -2868,39 +2956,39 @@ class Logger:
         logFile: str, log file path.
         printTruncateLen: int, if <= 0, log is not truncated when print.
         """
-        if not isinstance(log, str):
-            log = str(log)
-        if printToStdout and sys.stdout:
-            isValidColor = (consoleColor >= ConsoleColor.Black and consoleColor <= ConsoleColor.White)
-            if isValidColor:
-                SetConsoleColor(consoleColor)
-            try:
-                if printTruncateLen > 0 and len(log) > printTruncateLen:
-                    sys.stdout.write(log[:printTruncateLen] + '...')
-                else:
-                    sys.stdout.write(log)
-            except Exception as ex:
-                SetConsoleColor(ConsoleColor.Red)
-                isValidColor = True
-                sys.stdout.write(ex.__class__.__name__ + ': can\'t print the log!')
-                if log.endswith('\n'):
-                    sys.stdout.write('\n')
-            if isValidColor:
-                ResetConsoleColor()
-            sys.stdout.flush()
-        if not writeToFile:
-            return
-        fileName = logFile if logFile else Logger.FileName
-        fout = None
-        try:
-            fout = open(fileName, 'a+', encoding='utf-8')
-            fout.write(log)
-        except Exception as ex:
-            if sys.stdout:
-                sys.stdout.write(ex.__class__.__name__ + ': can\'t write the log!')
-        finally:
-            if fout:
-                fout.close()
+        # if not isinstance(log, str):
+        #     log = str(log)
+        # if printToStdout and sys.stdout:
+        #     isValidColor = (consoleColor >= ConsoleColor.Black and consoleColor <= ConsoleColor.White)
+        #     if isValidColor:
+        #         SetConsoleColor(consoleColor)
+        #     try:
+        #         if printTruncateLen > 0 and len(log) > printTruncateLen:
+        #             sys.stdout.write(log[:printTruncateLen] + '...')
+        #         else:
+        #             sys.stdout.write(log)
+        #     except Exception as ex:
+        #         SetConsoleColor(ConsoleColor.Red)
+        #         isValidColor = True
+        #         sys.stdout.write(ex.__class__.__name__ + ': can\'t print the log!')
+        #         if log.endswith('\n'):
+        #             sys.stdout.write('\n')
+        #     if isValidColor:
+        #         ResetConsoleColor()
+        #     sys.stdout.flush()
+        # if not writeToFile:
+        #     return
+        # fileName = logFile if logFile else Logger.FileName
+        # fout = None
+        # try:
+        #     fout = open(fileName, 'a+', encoding='utf-8')
+        #     fout.write(log)
+        # except Exception as ex:
+        #     if sys.stdout:
+        #         sys.stdout.write(ex.__class__.__name__ + ': can\'t write the log!')
+        # finally:
+        #     if fout:
+        #         fout.close()
 
     @staticmethod
     def WriteLine(log: Any, consoleColor: int = -1, writeToFile: bool = True, printToStdout: bool = True, logFile: str = None) -> None:
@@ -3735,7 +3823,7 @@ class ItemContainerPattern():
         """Refer https://docs.microsoft.com/en-us/windows/desktop/api/uiautomationclient/nn-uiautomationclient-iuiautomationitemcontainerpattern"""
         self.pattern = pattern
 
-    def FindItemByProperty(control: 'Control', propertyId: int, propertyValue) -> 'Control':
+    def FindItemByProperty(self, control: 'Control', propertyId: int, propertyValue) -> 'Control':
         """
         Call IUIAutomationItemContainerPattern::FindItemByProperty.
         control: `Control` or its subclass.
@@ -5303,10 +5391,17 @@ class Control():
         return 'ControlType: {0}    ClassName: {1}    AutomationId: {2}    Rect: {3}    Name: {4}    Handle: 0x{5:X}({5})'.format(
             self.ControlTypeName, self.ClassName, self.AutomationId, rect, self.Name, self.NativeWindowHandle)
 
+    def __eq__(self, other):
+        if type(other) != type(self):
+            return False
+        return self.GetRuntimeId() == other.GetRuntimeId()
+    
     @property
-    def runtimeid(self):
-        return ''.join([str(i) for i in self.GetRuntimeId()])
-
+    def winapi(self):
+        if not hasattr(self, '_winapi'):
+            self._winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        return self._winapi
+    
     @staticmethod
     def CreateControlFromElement(element) -> 'Control':
         """
@@ -5331,6 +5426,33 @@ class Control():
         """
         newControl = Control.CreateControlFromElement(control.Element)
         return newControl
+    
+    def tree(self, max=9999999):
+        try:
+            return PrintAllControlTree(self, max)
+        except Exception as e:
+            pass
+        # try:
+        #     # from anytree import Node, RenderTree
+        #     # node = Node(f"[{self.ControlTypeName} 0](\"{self.ClassName}\", \"{self.Name.replace('\n', '')}\", \"{self.runtimeid}\")")
+        #     walk = WalkTree(
+        #         self, 
+        #         getFirstChild=lambda c: c.GetFirstChildControl(),
+        #         getNextSibling=lambda c: c.GetNextSiblingControl()
+        #     )
+        #     nn = '\n'
+        #     print(f"[{self.ControlTypeName} 0](\"{self.ClassName}\", \"{self.Name.replace(nn, '')}\", \"{self.runtimeid}\")")
+        #     for c, depth in walk:
+        #         print('    ' * depth + f"[{c.ControlTypeName} {depth}](\"{c.ClassName}\", \"{c.Name.replace(nn, '')}\", \"{c.runtimeid}\")")
+        # except Exception as e:
+        #     pass
+
+    @property
+    def runtimeid(self):
+        content = self.Name
+        rect = self.BoundingRectangle
+        hash_text = f'({rect.height()},{rect.width()}){content}{self.GetRuntimeId()}'
+        return md5(hash_text.encode()).hexdigest()
 
     def SetSearchFromControl(self, searchFromControl: 'Control') -> None:
         """searchFromControl: `Control` or its subclass"""
@@ -5462,6 +5584,66 @@ class Control():
         """
         rect = self.Element.CurrentBoundingRectangle
         return Rect(rect.left, rect.top, rect.right, rect.bottom)
+    
+    # def ScreenShot(self, savePath: str=None, return_img=False) -> str:
+    #     """
+    #     Save the control's screenshot to savePath.
+    #     savePath: str, the path to save the screenshot.
+    #     Return str, the path of the saved screenshot.
+    #     """
+    #     rect = self.Element.CurrentBoundingRectangle
+    #     bbox = (rect.left, rect.top, rect.right, rect.bottom)
+    #     img = ImageGrab.grab(bbox=bbox, all_screens=True)
+    #     if return_img:
+    #         return img
+    #     if savePath is None:
+    #         savePath = os.path.join(os.getcwd(), 'ControlScreenShot.png')
+    #     img.save(savePath)
+    #     return savePath
+
+    def ScreenShot(self, savePath: str = None, crop: tuple = (0, 0, 0, 0), crop_percentage: bool = False, return_img=False) -> str:
+        """
+        Save the control's screenshot to savePath with optional cropping.
+        
+        :param savePath: str, the path to save the screenshot.
+        :param crop: tuple, the amount to crop in (left, top, right, bottom).
+        :param crop_percentage: bool, whether the crop values are in percentage.
+        :return: str, the path of the saved screenshot.
+        """
+        if not hasattr(self, 'winapi'):
+            self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        rect = self.Element.CurrentBoundingRectangle
+        bbox = [rect.left, rect.top, rect.right, rect.bottom]
+        
+        if crop_percentage:
+            width, height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            crop = (
+                int(width * crop[0] / 100),
+                int(height * crop[1] / 100),
+                int(width * crop[2] / 100),
+                int(height * crop[3] / 100)
+            )
+        
+        # Apply cropping
+        bbox = (
+            bbox[0] + crop[0],
+            bbox[1] + crop[1],
+            bbox[2] - crop[2],
+            bbox[3] - crop[3]
+        )
+        
+        img = self.winapi.capture(bbox)
+        if return_img:
+            return img
+        
+        if savePath is None:
+            savePath = create_temp_png_path(prefix='uia_screenshot_')
+        savePath = os.path.realpath(savePath)
+        img.save(savePath)
+        return savePath
+    
+    def Walk(self, includeTop: bool = False, maxDepth: int = 0xFFFFFFFF):
+        return WalkControl(self, includeTop, maxDepth)
 
     @property
     def ClassName(self) -> str:
@@ -5480,7 +5662,10 @@ class Control():
         Call IUIAutomationElement::get_CurrentControlType.
         Refer https://docs.microsoft.com/en-us/windows/desktop/api/uiautomationclient/nf-uiautomationclient-iuiautomationelement-get_currentcontroltype
         """
-        return self.Element.CurrentControlType
+        if hasattr(self, '_controlType'):
+            return self._controlType
+        self._controlType = self.Element.CurrentControlType
+        return self._controlType
 
     #@property
     #def ControllerFor(self):
@@ -5682,6 +5867,36 @@ class Control():
         return self.Element.CurrentProviderDescription
 
     #FindAll
+    def FindAll(
+            self,
+            find_mode: Literal['All', 'Ancestors', 'Descendants', 'Children', 'Subtree', 'Parent']='All',
+            control_type: str=None,
+            pointer = None,
+            return_pointer: bool=False,
+        ) -> List['Control']:
+        """
+        Call IUIAutomationElement::FindAll.
+        Refer https://docs.microsoft.com/en-us/windows/desktop/api/uiautomationclient/nf-uiautomationclient-iuiautomationelement-findall
+        """
+        tree_scope = getattr(TreeScope, find_mode)
+        if control_type:
+            condition = _AutomationClient.instance().IUIAutomation.CreatePropertyCondition(
+                PropertyId.ControlTypeProperty,
+                getattr(ControlType, control_type)
+            )
+        else:
+            condition = _AutomationClient.instance().IUIAutomation.CreateTrueCondition()
+        if pointer is not None:
+            result = pointer
+        else:
+            result = self.Element.FindAll(tree_scope, condition)
+        if return_pointer:
+            return result
+        sub_controls = [
+            Control.CreateControlFromElement(result.GetElement(i))
+            for i in range(result.Length)
+        ]
+        return sub_controls
     #FindAllBuildCache
     #FindFirst
     #FindFirstBuildCache
@@ -5782,7 +5997,11 @@ class Control():
         """
         Property ControlTypeName.
         """
-        return ControlTypeNames[self.ControlType]
+        cls_name = self.__class__.__name__
+        if cls_name == 'Control':
+            return ControlTypeNames[self.ControlType]
+        else:
+            return cls_name
 
     def GetCachedPattern(self, patternId: int, cache: bool):
         """
@@ -5905,11 +6124,13 @@ class Control():
         else:
             return None
         
-    def GetAllProgeny(self) -> List[List['Control']]:
+    def GetAllProgeny(self, refresh=False) -> List[List['Control']]:
         """
         Get all progeny controls.
         Return List[List[Control]], a list of list of `Control` subclasses.
         """
+        if hasattr(self, '_progeny') and not refresh:
+            return self._progeny
         all_elements = []
 
         def find_all_elements(element, depth=0):
@@ -5921,9 +6142,10 @@ class Control():
                 find_all_elements(child, depth+1)
             return all_elements
         
-        return find_all_elements(self)
+        self._progeny = find_all_elements(self)
+        return self._progeny
     
-    def GetProgenyControl(self, depth: int=1, index: int=0, control_type: str = None) -> 'Control':
+    def GetProgenyControl(self, depth: int=1, index: int=0, control_type: str = None, refresh=False) -> 'Control':
         """
         Get the nth control in the mth depth.
         depth: int, starts with 0.
@@ -5931,12 +6153,12 @@ class Control():
         control_type: `Control` or its subclass, if not None, only return the nth control that matches the control_type.
         Return `Control` subclass or None.
         """
-        progeny = self.GetAllProgeny()
+        progeny = self.GetAllProgeny(refresh)
         try:
             controls = progeny[depth]
             if control_type:
                 controls = [child for child in controls if child.ControlTypeName == control_type]
-            if index < len(progeny):
+            if index < len(controls):
                 return controls[index]
         except IndexError:
             return
@@ -6020,7 +6242,10 @@ class Control():
         if DEBUG_SEARCH_TIME:
             startDateTime = datetime.datetime.now()
         while True:
-            control = FindControl(self.searchFromControl, self._CompareFunction, self.searchDepth, False, self.foundIndex)
+            try:
+                control = FindControl(self.searchFromControl, self._CompareFunction, self.searchDepth, False, self.foundIndex)
+            except _ctypes.COMError:
+                return False
             if control:
                 self._element = control.Element
                 control._element = 0  # control will be destroyed, but the element needs to be stroed in self._element
@@ -6037,6 +6262,7 @@ class Control():
                     if printIfNotExist or DEBUG_EXIST_DISAPPEAR:
                         Logger.ColorfullyLog(self.GetColorfulSearchPropertiesStr() + '<Color=Red> does not exist.</Color>')
                     return False
+        
 
     def Disappears(self, maxSearchSeconds: float = 5, searchIntervalSeconds: float = SEARCH_INTERVAL, printIfNotDisappear: bool = False) -> bool:
         """
@@ -6078,7 +6304,7 @@ class Control():
                 return False
         return True
 
-    def MoveCursorToInnerPos(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = False) -> Tuple[int, int]:
+    def MoveCursorToInnerPos(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = True) -> Tuple[int, int]:
         """
         Move cursor to control's internal position, default to center.
         x: int, if < 0, move to self.BoundingRectangle.right + x, if not None, ignore ratioX.
@@ -6108,14 +6334,14 @@ class Control():
             SetCursorPos(x, y)
         return x, y
 
-    def MoveCursorToMyCenter(self, simulateMove: bool = False) -> Tuple[int, int]:
+    def MoveCursorToMyCenter(self, simulateMove: bool = True) -> Tuple[int, int]:
         """
         Move cursor to control's center.
         Return Tuple[int, int], two ints tuple (x, y), the cursor positon relative to screen(0, 0) after moving.
         """
         return self.MoveCursorToInnerPos(simulateMove=simulateMove)
 
-    def Click(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = False, waitTime: float = OPERATION_WAIT_TIME) -> None:
+    def Click(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = False, waitTime: float = OPERATION_WAIT_TIME, move: bool=False, pos='center', return_pos=True, show_window=False) -> None:
         """
         x: int, if < 0, click self.BoundingRectangle.right + x, if not None, ignore ratioX.
         y: int, if < 0, click self.BoundingRectangle.bottom + y, if not None, ignore ratioY.
@@ -6128,11 +6354,70 @@ class Control():
         Click(10, 10): click left+10, top+10.
         Click(-10, -10): click right-10, bottom-10.
         """
-        point = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
-        if point:
-            Click(point[0], point[1], waitTime)
+        # if move:
+        #     pos = win32api.GetCursorPos()
+        #     point = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
+        #     if point:
+        #         Click(point[0], point[1], waitTime)
+        #     if return_pos:
+        #         win32api.SetCursorPos(pos)
+        # else:
+        #     if not hasattr(self, 'winapi'):
+        #         self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        #     self.winapi.click_by_bbox(self.BoundingRectangle, xbias=x, ybias=y, pos=pos, activate=show_window)
+        if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        self.winapi.click_by_bbox(self.BoundingRectangle, xbias=x, ybias=y, pos=pos, activate=show_window, move=move)
 
-    def MiddleClick(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = False, waitTime: float = OPERATION_WAIT_TIME) -> None:
+    def Flash(self, color=0x0000FF):
+        """
+        color: int, RGB color.
+        Flash the control with color.
+        """
+        rect = self.BoundingRectangle
+        if not rect:
+            print('Control has no BoundingRectangle.')
+            return
+        
+        left, top, right, bottom = rect.left, rect.top, rect.right, rect.bottom
+        desktop_hwnd = win32gui.GetDesktopWindow()
+        if not hasattr(self, 'winapi'):
+            self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        self.winapi._overlay.add_rect(left, top, right, bottom).flash()
+        # for i in range(3):
+        #     desktop_dc = win32gui.GetWindowDC(desktop_hwnd)
+        #     brush = win32gui.CreateSolidBrush(color)
+        #     rect_tuple = (left, top, right, bottom)
+        #     win32gui.FrameRect(desktop_dc, rect_tuple, brush)
+        #     time.sleep(0.5)
+        #     win32gui.InvalidateRect(desktop_hwnd, rect_tuple, True)
+        #     win32gui.ReleaseDC(desktop_hwnd, desktop_dc)
+        #     self.Hover()
+        #     time.sleep(0.5)
+
+    def Hover(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = True, waitTime: float = OPERATION_WAIT_TIME, move: bool=False) -> None:
+        """
+        x: int, if < 0, hover self.BoundingRectangle.right + x, if not None, ignore ratioX.
+        y: int, if < 0, hover self.BoundingRectangle.bottom + y, if not None, ignore ratioY.
+        ratioX: float.
+        ratioY: float.
+        simulateMove: bool, if True, first move cursor to control smoothly.
+        waitTime: float.
+        
+        Hover(), Hover(ratioX=0.5, ratioY=0.5): hover center.
+        Hover(10, 10): hover left+10, top+10.
+        Hover(-10, -10): hover right-10, bottom-10.
+        """
+        if move:
+            point = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
+            # if point:
+            #     Hover(point[0], point[1], waitTime)
+        else:
+            if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+            self.winapi.hover_by_bbox(self.BoundingRectangle, xbias=x, ybias=y)
+
+    def MiddleClick(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = True, waitTime: float = OPERATION_WAIT_TIME, move: bool=False, show_window=False) -> None:
         """
         x: int, if < 0, middle click self.BoundingRectangle.right + x, if not None, ignore ratioX.
         y: int, if < 0, middle click self.BoundingRectangle.bottom + y, if not None, ignore ratioY.
@@ -6145,11 +6430,16 @@ class Control():
         MiddleClick(10, 10): middle click left+10, top+10.
         MiddleClick(-10, -10): middle click right-10, bottom-10.
         """
-        point = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
-        if point:
-            MiddleClick(point[0], point[1], waitTime)
+        if move:
+            point = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
+            if point:
+                MiddleClick(point[0], point[1], waitTime)
+        else:
+            if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+            self.winapi.click_by_bbox(self.BoundingRectangle, button='mid', xbias=x, ybias=y, activate=show_window)
 
-    def RightClick(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = False, waitTime: float = OPERATION_WAIT_TIME) -> None:
+    def RightClick(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = True, waitTime: float = OPERATION_WAIT_TIME, move=False, pos='center', show_window=False) -> None:
         """
         x: int, if < 0, right click self.BoundingRectangle.right + x, if not None, ignore ratioX.
         y: int, if < 0, right click self.BoundingRectangle.bottom + y, if not None, ignore ratioY.
@@ -6162,11 +6452,16 @@ class Control():
         RightClick(10, 10): right click left+10, top+10.
         RightClick(-10, -10): right click right-10, bottom-10.
         """
-        point = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
-        if point:
-            RightClick(point[0], point[1], waitTime)
+        if move:
+            point = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
+            if point:
+                RightClick(point[0], point[1], waitTime)
+        else:
+            if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+            self.winapi.click_by_bbox(self.BoundingRectangle, button='right', xbias=x, ybias=y, pos=pos, activate=show_window)
 
-    def DoubleClick(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = False, waitTime: float = OPERATION_WAIT_TIME) -> None:
+    def DoubleClick(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, simulateMove: bool = True, waitTime: float = OPERATION_WAIT_TIME, move=False, show_window=False) -> None:
         """
         x: int, if < 0, right click self.BoundingRectangle.right + x, if not None, ignore ratioX.
         y: int, if < 0, right click self.BoundingRectangle.bottom + y, if not None, ignore ratioY.
@@ -6179,9 +6474,58 @@ class Control():
         DoubleClick(10, 10): double click left+10, top+10.
         DoubleClick(-10, -10): double click right-10, bottom-10.
         """
-        x, y = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
-        Click(x, y, GetDoubleClickTime() * 1.0 / 2000)
-        Click(x, y, waitTime)
+        if move:
+            x, y = self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove)
+            Click(x, y, GetDoubleClickTime() * 1.0 / 2000)
+            Click(x, y, waitTime)
+        else:
+            if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+            self.winapi.click_by_bbox(self.BoundingRectangle, double_click=True, activate=show_window)
+
+    def ShortcutPaste(self, click=True, move=False) -> None:
+        """
+        Paste content from clipboard like Ctrl+V.
+        click: bool, if True, first click control.
+        """
+        if click:
+            self.Click(move=move, simulateMove=False, return_pos=False)
+        if not hasattr(self, 'winapi'):
+            self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        self.winapi.shortcut_paste()
+
+    def ShortcutSearch(self, click=True, move=False) -> None:
+        """
+        Search content from clipboard like Ctrl+F.
+        click: bool, if True, first click control.
+        """
+        if click:
+            self.Click(move=move, simulateMove=False, return_pos=False)
+        if not hasattr(self, 'winapi'):
+            self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        self.winapi.shortcut_search()
+
+    def ShortcutSelectAll(self, click=True, move=False) -> None:
+        """
+        Select all content like Ctrl+A.
+        click: bool, if True, first click control.
+        """
+        if click:
+            self.Click(move=move, simulateMove=False, return_pos=False)
+        if not hasattr(self, 'winapi'):
+            self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        self.winapi.shortcut_select_all()
+
+    def ShortcutCopy(self, click=True, move=False) -> None:
+        """
+        Paste content from clipboard like Ctrl+V.
+        click: bool, if True, first click control.
+        """
+        if click:
+            self.Click(move=move, simulateMove=False, return_pos=False)
+        if not hasattr(self, 'winapi'):
+            self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        self.winapi.shortcut_copy()
 
     def DragDrop(self, x1: int, y1: int, x2: int, y2: int, moveSpeed: float=1, waitTime: float = OPERATION_WAIT_TIME) -> None:
         rect = self.BoundingRectangle
@@ -6195,7 +6539,7 @@ class Control():
         y2 = (rect.top if y2 >= 0 else rect.bottom) + y2
         DragDrop(x1, y1, x2, y2, moveSpeed, waitTime)
 
-    def WheelDown(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, wheelTimes: int = 1, interval: float = 0.05, waitTime: float = OPERATION_WAIT_TIME) -> None:
+    def WheelDown(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, wheelTimes: int = 1, interval: float = 0.05, waitTime: float = OPERATION_WAIT_TIME, api=True) -> None:
         """
         Make control have focus first, move cursor to the specified position and mouse wheel down.
         x: int, if < 0, move x cursor to self.BoundingRectangle.right + x, if not None, ignore ratioX.
@@ -6206,13 +6550,18 @@ class Control():
         interval: float.
         waitTime: float.
         """
-        cursorX, cursorY = GetCursorPos()
-        self.SetFocus()
-        self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove=False)
-        WheelDown(wheelTimes, interval, waitTime)
-        SetCursorPos(cursorX, cursorY)
+        if api:
+            if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+            self.winapi.scroll_wheel(self.BoundingRectangle, wheelTimes*(-120))
+        else:
+            cursorX, cursorY = GetCursorPos()
+            self.SetFocus()
+            self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove=False)
+            WheelDown(wheelTimes, interval, waitTime)
+            SetCursorPos(cursorX, cursorY)
 
-    def WheelUp(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, wheelTimes: int = 1, interval: float = 0.05, waitTime: float = OPERATION_WAIT_TIME) -> None:
+    def WheelUp(self, x: int = None, y: int = None, ratioX: float = 0.5, ratioY: float = 0.5, wheelTimes: int = 1, interval: float = 0.05, waitTime: float = OPERATION_WAIT_TIME, api=True) -> None:
         """
         Make control have focus first, move cursor to the specified position and mouse wheel up.
         x: int, if < 0, move x cursor to self.BoundingRectangle.right + x, if not None, ignore ratioX.
@@ -6223,11 +6572,16 @@ class Control():
         interval: float.
         waitTime: float.
         """
-        cursorX, cursorY = GetCursorPos()
-        self.SetFocus()
-        self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove=False)
-        WheelUp(wheelTimes, interval, waitTime)
-        SetCursorPos(cursorX, cursorY)
+        if api:
+            if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+            self.winapi.scroll_wheel(self.BoundingRectangle, wheelTimes*120)
+        else:
+            cursorX, cursorY = GetCursorPos()
+            self.SetFocus()
+            self.MoveCursorToInnerPos(x, y, ratioX, ratioY, simulateMove=False)
+            WheelUp(wheelTimes, interval, waitTime)
+            SetCursorPos(cursorX, cursorY)
 
     def ShowWindow(self, cmdShow: int, waitTime: float = OPERATION_WAIT_TIME) -> bool:
         """
@@ -6304,7 +6658,21 @@ class Control():
         self.SetFocus()
         SendKey(key, waitTime)
 
-    def SendKeys(self, text: str, interval: float = 0.01, waitTime: float = OPERATION_WAIT_TIME, charMode: bool = True) -> None:
+    def Input(self, text: str, waitTime: float = -1) -> None:
+        """
+        Input text to edit control.
+        text: str.
+        waitTime: float. If < 0 use the random time between 0.01s and 0.05s per char.
+        """
+        if not hasattr(self, 'winapi'):
+            self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+        self.winapi.input(text, waitTime)
+
+    def Paste(self, text: str):
+        pyperclip.copy(text)
+        self.ShortcutPaste()
+
+    def SendKeys(self, text: str, interval: float = 0.01, waitTime: float = OPERATION_WAIT_TIME, charMode: bool = True, api=True) -> None:
         """
         Make control have focus first and type keys.
         `self.SetFocus` may not work for some controls, you may need to click it to make it have focus.
@@ -6313,8 +6681,13 @@ class Control():
         waitTime: float.
         charMode: bool, if False, the text typied is depend on the input method if a input method is on.
         """
-        self.SetFocus()
-        SendKeys(text, interval, waitTime, charMode)
+        if api:
+            if not hasattr(self, 'winapi'):
+                self.winapi = Win32(self.GetTopLevelControl().NativeWindowHandle)
+            self.winapi.send_keys_shortcut(text)
+        else:
+            self.SetFocus()
+            SendKeys(text, interval, waitTime, charMode)
 
     def GetPixelColor(self, x: int, y: int) -> int:
         """

@@ -1,9 +1,27 @@
 from __future__ import annotations
+from .base import BaseUISubWnd
+from .moment import (
+    MomentsWnd,
+    Moments
+)
+from .component import ProfileWnd
 from wxauto.param import (
     WxParam, 
+    WxResponse,
 )
 from wxauto.languages import *
-from wxauto.uiautomation import Control
+from wxauto.utils import (
+    SetClipboardText,
+    SetClipboardFiles,
+    
+)
+from wxauto.logger import wxlog
+from wxauto.uia import RollIntoView, Control
+from typing import (
+    List,
+)
+import time
+import re
 
 class NavigationBox:
     def __init__(self, control, parent):
@@ -42,14 +60,29 @@ class NavigationBox:
     def switch_to_files_page(self):
         self.files_icon.Click()
 
+    def open_moments(self, timeout=3) -> MomentsWnd:
+        if sns := MomentsWnd(self, timeout=0):
+            return sns
+        self.moments_icon.Click()
+        sns = MomentsWnd(self, timeout=timeout)
+        return sns
+
     def switch_to_browser_page(self):
         self.browser_icon.Click()
 
     # 是否有新消息
     def has_new_message(self):
-        from wxauto.utils.win32 import capture
-
-        rect = self.chat_icon.BoundingRectangle
-        bbox = rect.left, rect.top, rect.right, rect.bottom
-        img = capture(self.root.HWND, bbox)
+        img = self.chat_icon.ScreenShot(return_img=True)
         return any(p[0] > p[1] and p[0] > p[2] for p in img.getdata())
+    
+    def has_new_friend_request(self):
+        img = self.contact_icon.ScreenShot(return_img=True)
+        return any(p[0] > p[1] and p[0] > p[2] for p in img.getdata())
+    
+    def get_my_info(self):
+        self.root._show()
+        self.my_icon.Click(move=True)
+        profilewnd = ProfileWnd(self)
+        info = profilewnd.info
+        profilewnd.close()
+        return info

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from .base import BaseUISubWnd
 from wxauto.ui.component import (
     CMenuWnd
 )
@@ -9,17 +10,17 @@ from wxauto.param import (
 from wxauto.languages import *
 from wxauto.utils import (
     SetClipboardText,
+    SetClipboardFiles,
+    uilock
 )
 from wxauto.logger import wxlog
-from wxauto.uiautomation import Control
-from wxauto.utils.tools import roll_into_view
+from wxauto.uia import RollIntoView, Control
 from typing import (
     List,
     Union
 )
 import time
 import re
-
 
 class SessionBox:
     def __init__(self, control, parent):
@@ -46,6 +47,7 @@ class SessionBox:
                 for i in self.session_list.GetChildren()
                 if i.Name != self._lang('折叠置顶聊天')
                 and not re.match(self._lang('re_置顶聊天'), i.Name)
+                and i.BoundingRectangle.height() != 0
             ]
         elif self.archived_session_list.Exists(0):
             return [SessionElement(i, self) for i in self.archived_session_list.GetChildren()]
@@ -59,25 +61,13 @@ class SessionBox:
     def roll_down(self, n: int=5):
         self.control.MiddleClick()
         self.control.WheelDown(wheelTimes=n)
-    
-    def switch_chat(
+
+    def search(
             self, 
-            keywords: str, 
-            exact: bool = False,
+            keywords: str,
             force: bool = False,
             force_wait: Union[float, int] = 0.5
         ):
-        wxlog.debug(f"切换聊天窗口: {keywords}, {exact}, {force}, {force_wait}")
-        self.root._show()
-        sessions = self.get_session()
-        for session in sessions:
-            if (
-                keywords == session.name 
-                and session.control.BoundingRectangle.height()
-            ):
-                session.switch()
-                return keywords
-
         self.searchbox.RightClick()
         SetClipboardText(keywords)
         menu = CMenuWnd(self)
@@ -87,13 +77,34 @@ class SessionBox:
 
         if force:
             time.sleep(force_wait)
-            self.searchbox.SendKeys('{ENTER}')
-            return ''
+
+        return [SearchResultElement(i) for i in search_result.GetChildren()]
+    
+    def switch_chat(
+            self, 
+            keywords: str, 
+            exact: bool = False,
+            force: bool = False,
+            force_wait: Union[float, int] = 0.5
+        ):
+        wxlog.debug(f"切换聊天窗口: {keywords}, {exact}, {force}, {force_wait}")
+
+        sessions = self.get_session()
+        for session in sessions:
+            if (
+                keywords == session.name 
+                and session.control.BoundingRectangle.height()
+            ):
+                session.switch()
+                return keywords
         
+        search_box = self.control.ListControl(RegexName='.*?IDS_FAV_SEARCH_RESULT.*?')
+        search_result = self.search(keywords, force, force_wait)
+
         t0 = time.time()
         while time.time() -t0 < WxParam.SEARCH_CHAT_TIMEOUT:
             results = []
-            search_result_items = search_result.GetChildren()
+            search_result_items = search_box.GetChildren()
             highlight_who = re.sub(r'(\s+)', r'</em>\1<em>', keywords)
             for search_result_item in search_result_items:
                 item_name = search_result_item.Name
@@ -138,18 +149,18 @@ class SessionBox:
             
         if exact:
             wxlog.debug(f"{keywords} 未精准匹配，返回None")
-            if search_result.Exists(0):
-                search_result.SendKeys('{Esc}')
+            if search_box.Exists(0):
+                search_box.SendKeys('{Esc}')
             return None
         if results:
             wxlog.debug(f"{keywords} 匹配到多个结果，返回第一个")
             results[0].Click()
             return results[0].Name
         
-        if search_result.Exists(0):
-            search_result.SendKeys('{Esc}')
+        if search_box.Exists(0):
+            search_box.SendKeys('{Esc}')
 
-
+    # @uilock
     def open_separate_window(self, name: str):
         wxlog.debug(f"打开独立窗口: {name}")
         sessions = self.get_session()
@@ -157,11 +168,11 @@ class SessionBox:
             if session.name == name:
                 wxlog.debug(f"找到会话: {name}")
                 while session.control.BoundingRectangle.height():
-                    try:
-                        session.click()
-                        session.double_click()
-                    except:
-                        pass
+                    if self.parent.get_sub_wnd(name):
+                        wxlog.debug(f"已打开会话窗口：{name}")
+                        return WxResponse.success(data={'nickname': name})
+                    # session.click()
+                    session.double_click()
                     time.sleep(0.1)
                 else:
                     return WxResponse.success(data={'nickname': name})
@@ -170,24 +181,24 @@ class SessionBox:
     
     def go_top(self):
         wxlog.debug("回到会话列表顶部")
-        if self.archived_session_list.Exists(0):
-            self.control.ButtonControl(Name=self._lang('返回')).Click()
-            time.sleep(0.3)
-        first_session_name = self.session_list.GetChildren()[0].Name
-        while True:
-            self.control.WheelUp(wheelTimes=3)
+        self.control.MiddleClick()
+        self.control.SendKeys('{Home}')
+
+    def open_contact_manager(self):
+        wxlog.debug("打开联系人管理")
+        while not (contact_btn := self.control.ButtonControl(Name=self._lang('通讯录管理'))).Exists(0):
+            self.go_top()
+            self.control.WheelUp(wheelTimes=5)
             time.sleep(0.1)
-            if self.session_list.GetChildren()[0].Name == first_session_name:
-                break
-            else:
-                first_session_name = self.session_list.GetChildren()[0].Name
+        contact_btn.Click()
 
 
 class SessionElement:
     def __init__(
             self, 
             control: Control, 
-            parent: SessionBox
+            parent: SessionBox, 
+            debug_output: bool=True
         ):
         self.root = parent.root
         self.parent = parent
@@ -232,17 +243,26 @@ class SessionElement:
             'content': self.content,
             'isnew': self.isnew,
             'new_count': self.new_count,
-            'ismute': self.ismute
+            'ismute': self.ismute,
         }
 
     def _lang(self, text: str) -> str:
         return self.parent._lang(text)
     
+    def __repr__(self):
+        content = str(self.content).replace('\n', ' ')
+        if len(content) > 5:
+            content = content[:5] + '...'
+        return f"<wxauto Session Element({self.name} - {content})>"
+    
+    @property
+    def ishide(self):
+        return self.control.BoundingRectangle.height() == 0
+    
     def roll_into_view(self):
-        self.root._show()
-        roll_into_view(self.control.GetParentControl(), self.control)
+        RollIntoView(self.control.GetParentControl(), self.control)
 
-
+    # @uilock
     def _click(self, right: bool=False, double: bool=False):
         self.roll_into_view()
         if right:
@@ -259,7 +279,62 @@ class SessionElement:
         self._click(right=True)
 
     def double_click(self):
+        self._click()
         self._click(double=True)
 
+    # @uilock
+    def delete(self):
+        RollIntoView(self.control.GetParentControl(), self.control)
+        self.control.RightClick()
+        menu = CMenuWnd(self.parent)
+        menu.select('删除聊天')
+        dialog = self.root.PaneControl(ClassName='WeUIDialog')
+        if dialog.Exists(5):
+            dialog.ButtonControl(Name='删除').Click()
+            return WxResponse.success()
+        return WxResponse.failure('删除聊天失败')
+
+    # @uilock
+    def hide(self):
+        if self.control.BoundingRectangle.height():
+            RollIntoView(self.control.GetParentControl(), self.control)
+            self.control.RightClick()
+            menu = CMenuWnd(self.parent)
+            return menu.select('不显示聊天')
+        return WxResponse.success()
+
+    # @uilock
     def switch(self):
-        self.click()
+        if self.control.BoundingRectangle.height():
+            self.click()
+        else:
+            self.parent.switch_chat(self.name)
+
+    def select_option(self, option: str, wait=0.3):
+        self.roll_into_view()
+        self.control.RightClick()
+        time.sleep(wait)
+        menu = CMenuWnd(self.parent)
+        return menu.select(option)
+    
+class SearchResultElement:
+    def __init__(self, control):
+        self.control = control
+        self.type = self.control.ControlTypeName.replace('Control', '').lower()
+        self.text = self.control.Name
+        if self.type == 'pane':
+            if (textcontrol := self.control.TextControl()).Exists(0):
+                self.text = textcontrol.Name
+
+    def __repr__(self):
+        return f'<wxauto Session Search Result [{self.type}]({self.text})>'
+
+    def get_all_text(self):
+        return [text for i in self.control.FindAll() if (text := i.Name)]
+    
+    def click(self):
+        RollIntoView(self.control.GetParentControl(), self.control)
+        self.control.Click()
+
+    def close(self):
+        self.control.SendKeys('{Esc}')
