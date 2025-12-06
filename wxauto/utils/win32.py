@@ -8,7 +8,6 @@ import win32con
 import win32process
 import win32clipboard
 import pyperclip
-import psutil
 import ctypes
 from PIL import Image
 from wxauto import uiautomation as uia
@@ -45,10 +44,26 @@ def Click(rect):
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
     
 def GetPathByHwnd(hwnd):
+    """通过窗口句柄获取进程可执行文件路径 - 使用pywin32"""
     try:
         thread_id, process_id = win32process.GetWindowThreadProcessId(hwnd)
-        process = psutil.Process(process_id)
-        return process.exe()
+        
+        # 获取进程句柄
+        PROCESS_QUERY_INFORMATION = 0x0400
+        PROCESS_VM_READ = 0x0010
+        process_handle = win32api.OpenProcess(
+            PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 
+            False, 
+            process_id
+        )
+        
+        # 获取可执行文件路径
+        exe_path = win32process.GetModuleFileNameEx(process_handle, 0)
+        
+        # 关闭句柄
+        win32api.CloseHandle(process_handle)
+        
+        return exe_path
     except Exception as e:
         print(f"Error: {e}")
         return None
