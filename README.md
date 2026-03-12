@@ -1,7 +1,5 @@
 # wxauto (2021-2025)
 
-## 本项目于2025-10-28停止维护
-
 
 ### **文档**： [完整文档](https://github.com/cluic/wxauto/blob/main/docs/README.md)
 
